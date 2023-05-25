@@ -1,0 +1,263 @@
+service: cesiones-services
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+
+resources:
+  Resources:
+
+    snsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: snsTopicCesion
+        TopicName: snsTopicCesion    
+
+    DbAecTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: DbAecTopic
+        TopicName: DbAecTopic
+
+    DbCertfTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: DbCertfTopic
+        TopicName: DbCertfTopic
+
+    cesionServiceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: cesionServiceRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: cesionServicePolicyDocument
+            PolicyDocument: 
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'secretsmanager:GetSecretValue'
+                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84"
+                - Effect: Allow
+                  Action:
+                    - sns:Publish
+                  Resource: !Ref snsTopic
+          
+      
+    aecConsumerSNSConsumerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: aecConsumerSNSConsumerRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: aecConsumerSNSConsumerPolicyDocument
+            PolicyDocument: 
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'secretsmanager:GetSecretValue'
+                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84"
+                - Effect: Allow
+                  Action:
+                    - "sns:ListSubscriptionsByTopic"
+                    - "sns:Subscribe"
+                  Resource: !GetAtt snsTopic.TopicArn
+                
+                - Effect: Allow
+                  Action: "s3:PutObject"
+                  Resource: ["arn:aws:s3:::arrayanfilesqa/aec_files","arn:aws:s3:::arrayanfilesqa/*"]
+
+                - Effect: Allow
+                  Action:
+                    - sns:Publish
+                  Resource: !Ref DbAecTopic
+
+                - Effect: Allow
+                  Action:
+                    - sns:Publish
+                  Resource: !Ref DbCertfTopic
+          
+    DBConsumerSNSConsumerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: DBConsumerSNSConsumerRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: DBConsumerSNSConsumerRolePolicyDocument
+            PolicyDocument: 
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'secretsmanager:GetSecretValue'
+                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
+                
+                - Effect: Allow
+                  Action:
+                    - "sns:ListSubscriptionsByTopic"
+                    - "sns:Subscribe"
+                  Resource: !GetAtt snsTopic.TopicArn
+
+                - Effect: Allow
+                  Action:
+                    - "sns:ListSubscriptionsByTopic"
+                    - "sns:Subscribe"
+                  Resource: !GetAtt DbCertfTopic.TopicArn
+
+                - Effect: Allow
+                  Action:
+                    - "sns:ListSubscriptionsByTopic"
+                    - "sns:Subscribe"
+                  Resource: !GetAtt DbAecTopic.TopicArn
+
+
+functions:
+  getCesionesSimpli:
+    handler: handler.get_cesiones_simpli
+    environment:
+        REGION_SECRET : 'us-east-2'
+        SECRET_NAME : 'sii/simpli'
+        SNS_TOPIC_ARN : !Ref snsTopic
+    role: { "Fn::GetAtt": ["cesionServiceRole", "Arn"] }
+    events:
+      - schedule: 
+          rate: cron(/5 * * * ? *)
+          enabled: true
+          input:
+            dias: 1
+            tipo_consulta: 2
+
+  getAecXMLFile:
+      handler: handler.get_aec_file
+      environment:
+        SUB_DIR: 'aec_files'
+        BUCKET_NAME : 'arrayanfilesqa'
+        REGION_SECRET : 'us-east-2'
+        SECRET_NAME : 'sii/simpli'
+        SNS_TOPIC_ARN :  !Ref DbAecTopic
+      role: { "Fn::GetAtt": ["aecConsumerSNSConsumerRole", "Arn"] }
+      dependsOn:
+        - "snsTopic"
+        - "DbAecTopic"
+      events:
+        - sns:
+            displayName: Extract Aec File from cesion
+            topicName: snsTopic
+            arn: { "Fn::GetAtt": ["snsTopic", "TopicArn"] }
+    
+  getCertificadoCesion:
+      handler: handler.get_certificado_cesion
+      environment:
+        SUB_DIR: 'certificados_cesion'
+        BUCKET_NAME : 'arrayanfilesqa'
+        REGION_SECRET : 'us-east-2'
+        SECRET_NAME : 'sii/simpli'
+        SNS_TOPIC_ARN :  !Ref DbCertfTopic
+        DAYS : 10
+      role: { "Fn::GetAtt": ["aecConsumerSNSConsumerRole", "Arn"] }
+      dependsOn:
+        - "snsTopic"
+        - "DbCertfTopic"
+      events:
+        - sns:
+            displayName: Extract Aec File from cesion
+            topicName: snsTopic
+            arn: { "Fn::GetAtt": ["snsTopic", "TopicArn"] }
+
+      layers:
+        - "arn:aws:lambda:us-east-2:746907585706:layer:wkhtmltox-01264:2"
+
+  saveCesionInDb:
+      handler: handler.insert_hc_db
+      environment:
+        REGION_SECRET : 'us-east-2'
+        SECRET_NAME : 'dev/mysql'
+        SNS_TOPIC_ARN :  !Ref snsTopic
+        
+      role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
+      dependsOn:
+        - "snsTopic"
+      events:
+        - sns:
+            displayName: Get data from snsTopic and save in DB
+            topicName: snsTopic
+            arn: { "Fn::GetAtt": ["snsTopic", "TopicArn"] }
+
+  saveAecRegisterDb:
+      handler: handler.saveAecRegisterDb
+      environment:
+        REGION_SECRET : 'us-east-2'
+        SECRET_NAME : 'dev/mysql'
+        SNS_TOPIC_ARN :  !Ref DbAecTopic
+      role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
+      dependsOn:
+        - "snsTopic"
+        - "DbAecTopic"
+      events:
+        - sns:
+            displayName: Get data from DbAecTopic and save in DB
+            topicName: DbAecTopic
+            arn: { "Fn::GetAtt": ["DbAecTopic", "TopicArn"] }
+
+  saveCertificadoCesionDB:
+      handler: handler.saveCertificadosCesionDb
+      environment:
+        REGION_SECRET : 'us-east-2'
+        SECRET_NAME : 'dev/mysql'
+        SNS_TOPIC_ARN :  !Ref DbCertfTopic
+      role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
+      dependsOn:
+        - "snsTopic"
+        - "DbCertfTopic"
+      events:
+        - sns:
+            displayName: Get data from DbCertfTopic and save in DB
+            topicName: DbCertfTopic
+            arn: { "Fn::GetAtt": ["DbCertfTopic", "TopicArn"] }
+
+outputs:
+  snsTopicArn:
+    Value:
+      Fn::GetAtt: [snsTopic, TopicArn]
+
+  DbAecTopicArn:
+    Value:
+      Fn::GetAtt: [DbAecTopic, TopicArn]
+
+  DbCertfTopic:
+    Value:
+      Fn::GetAtt: [DbCertfTopic, TopicArn]
+
+plugins:
+  - serverless-python-requirements

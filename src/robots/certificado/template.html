@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificado Cesion</title>
+
+    <style>
+        body {
+            background-color: white;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            width: 17cm;
+            text-align: justify;
+            margin: 0 auto;
+        }
+
+        p {
+            text-align: justify;
+        }
+    </style>
+
+</head>
+<body>
+
+    <br>
+
+    <div style="width: 17cm;">
+
+        <table border="0" width="100%" style="font-size: 11px;">
+            <tbody>
+                <tr>
+                    <td width="50%">
+                        <img border="0" src="https://simpliassets12daacw.s3.us-east-2.amazonaws.com/logo_sii.gif"
+                            width="173" height="66" alt="logosii" style="float: left;">
+                        <label style="float: right;margin-top: 5%;">Folio N° : <b>{{folio_superior}}</b></label>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td width="100%" align="center">
+                        <br>
+                        <h1 style="font-size: 1.5em;text-align: center;">CERTIFICADO DE ANOTACIÓN EN EL REGISTRO</h1>
+                        <br>
+                    </td>
+                <tr>
+
+                <tr>
+                    <td width="100%">
+                        <p align="justify">{{parrafo}}</p>
+                        <p>La información relativa a las cesiones y documentos se indican a continuación</p>
+                        <br>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td width="100%">
+                        <table width="100%" style="font-size: 11px;border-spacing: 0px;" cellspacing="0">
+                            <tbody>
+                                <tr>
+                                    <td width="65%" colspan="5" align="center" height="16"
+                                        style="border-top: 1px solid black;border-left: 1px solid black;border-bottom: 1px solid black;text-align: center;">
+                                        <b>DOCUMENTO</b></td>
+                                    <td width="35%" colspan="3" align="center" height="16"
+                                        style="border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;text-align: center;">
+                                        <b>CESION</b></td>
+                                </tr>
+
+                                <tr>
+                                    <td width="12%" valign="top" align="center" height="32"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        <b>RUT Emisor</b></td>
+                                    <td width="14%" valign="top" align="center" height="32"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        <b>Tipo Documento</b></td>
+                                    <td width="12%" valign="top" align="center" height="32"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        <b>N° de Folio</b></td>
+                                    <td width="12%" valign="top" align="center" height="32"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        <b>Fecha del Documento</b></td>
+                                    <td width="12%" valign="top" align="center" height="32"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        <b>Monto Documento</b></td>
+                                    <td width="12%" valign="top" align="center" height="32"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        <b>Fecha Inicio</b></td>
+                                    <td width="12%" valign="top" align="center" height="32"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        <b>Fecha Ult. Vencim.</b></td>
+                                    <td width="12%" valign="top" align="center" height="32"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;text-align: center;">
+                                        <b>Monto Cedido</b></td>
+                                </tr>
+
+
+                                {% for i in array_final %}
+                                <tr>
+                                    <td width="12%" height="16" align="center"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        {{i.rut}}</td>
+                                    <td width="14%" height="16"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        {{i.tipo_documento}}</td>
+                                    <td width="12%" height="16" align="center"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        {{i.numero_folio}}</td>
+                                    <td width="12%" height="16" align="center"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        {{i.fecha}}</td>
+                                    <td width="12%" height="16" align="right"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        {{i.monto}}</td>
+                                    <td align="center" width="12%" height="16"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        {{i.fecha_inicio}}</td>
+                                    <td align="center" width="12%" height="16"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;text-align: center;">
+                                        {{i.fecha_vecimiento}}</td>
+                                    <td align="right" width="12%" height="16"
+                                        style="border-bottom: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;text-align: center;">
+                                        {{i.monto_credito}}</td>
+                                </tr>
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td width="100%">
+                        <table border="0" width="100%" style="font-size: 11px;">
+                            <tbody>
+                                <tr>
+                                    <td width="50%">
+                                        <p>
+                                            <br><br><br><br><br>
+                                            ________________________________________<br>
+                                            FIRMA DE LA PERSONA QUE PRESENTA <br>
+                                            ESTE CERTIFICADO
+                                        </p>
+
+
+                                        <table border="0" width="100%" style="font-size: 11px;">
+                                            <tbody>
+                                                <tr>
+                                                    <td width="50%" align="left">Nombre:</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td width="50%" align="left">N° de RUT:</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td width="50%" align="left">Fecha del Certificado:</td>
+                                                    <td width="50%" align="left"> {{fecha_certificado}}</td>
+                                                </tr>
+
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                    <td width="50%">
+                                        <p><img border="0" style="margin-left: 50%;"
+                                                src="https://simpliassets12daacw.s3.us-east-2.amazonaws.com/certf_sii.gif"
+                                                width="130" height="117" alt="firma"></p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+
+
+
+            </tbody>
+        </table>
+
+
+
+
+
+    </div>
+</body>
+</html>
+
