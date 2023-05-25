@@ -152,7 +152,7 @@ functions:
     role: { "Fn::GetAtt": ["cesionServiceRole", "Arn"] }
     events:
       - schedule: 
-          rate: cron(/5 * * * ? *)
+          rate: cron(*/5 * * * ? *)
           enabled: true
           input:
             dias: 1
