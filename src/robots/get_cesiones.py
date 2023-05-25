@@ -5,6 +5,8 @@ import json
 ## session
 from src.fetch import session as sii_session
 
+## database
+from src.database import querys
 
 ## sns
 from src.sns import snsTopic
@@ -80,9 +82,18 @@ def clean_cesiones(data):
                     'fch_vencimiento': info[17]
                 }
                 
+                ## validacion de que ya exista la cesion
+                results = querys.validate_records(rut_cliente=obj['rut_cliente'],rut_deudor=obj['rut_deudor'],folio=obj['folio'])
                 
-                snsTopic.publish_event(message=json.dumps(obj))
-                cesiones.append(obj)
+                if len(results) > 0:
+                    if all(results[0].values()):
+                        return cesiones
+                    else:
+                        snsTopic.publish_event(message=json.dumps(obj))
+                        cesiones.append(obj)
+                else:
+                    snsTopic.publish_event(message=json.dumps(obj))
+                    cesiones.append(obj)
                 
             else:    
                 continue

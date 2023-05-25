@@ -50,6 +50,12 @@ resources:
                   Action:
                     - 'secretsmanager:GetSecretValue'
                   Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84"
+                
+                - Effect: Allow
+                  Action:
+                    - 'secretsmanager:GetSecretValue'
+                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
+                
                 - Effect: Allow
                   Action:
                     - sns:Publish
@@ -147,13 +153,14 @@ functions:
     handler: handler.get_cesiones_simpli
     environment:
         REGION_SECRET : 'us-east-2'
-        SECRET_NAME : 'sii/simpli'
+        SECRET_NAME_SII : 'sii/simpli'
+        SECRET_NAME_DB : 'dev/mysql'
         SNS_TOPIC_ARN : !Ref snsTopic
     role: { "Fn::GetAtt": ["cesionServiceRole", "Arn"] }
     events:
       - schedule: 
           rate: cron(*/5 * * * ? *)
-          enabled: true
+          enabled: false
           input:
             dias: 1
             tipo_consulta: 2
@@ -162,9 +169,9 @@ functions:
       handler: handler.get_aec_file
       environment:
         SUB_DIR: 'aec_files'
-        BUCKET_NAME : 'arrayanfilesqa'
         REGION_SECRET : 'us-east-2'
-        SECRET_NAME : 'sii/simpli'
+        BUCKET_NAME : 'arrayanfilesqa'
+        SECRET_NAME_SII : 'sii/simpli'
         SNS_TOPIC_ARN :  !Ref DbAecTopic
       role: { "Fn::GetAtt": ["aecConsumerSNSConsumerRole", "Arn"] }
       dependsOn:
@@ -182,7 +189,7 @@ functions:
         SUB_DIR: 'certificados_cesion'
         BUCKET_NAME : 'arrayanfilesqa'
         REGION_SECRET : 'us-east-2'
-        SECRET_NAME : 'sii/simpli'
+        SECRET_NAME_SII : 'sii/simpli'
         SNS_TOPIC_ARN :  !Ref DbCertfTopic
         DAYS : 10
       role: { "Fn::GetAtt": ["aecConsumerSNSConsumerRole", "Arn"] }
@@ -202,7 +209,7 @@ functions:
       handler: handler.insert_hc_db
       environment:
         REGION_SECRET : 'us-east-2'
-        SECRET_NAME : 'dev/mysql'
+        SECRET_NAME_DB : 'dev/mysql'
         SNS_TOPIC_ARN :  !Ref snsTopic
         
       role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
@@ -218,7 +225,7 @@ functions:
       handler: handler.saveAecRegisterDb
       environment:
         REGION_SECRET : 'us-east-2'
-        SECRET_NAME : 'dev/mysql'
+        SECRET_NAME_DB : 'dev/mysql'
         SNS_TOPIC_ARN :  !Ref DbAecTopic
       role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
       dependsOn:
@@ -234,7 +241,7 @@ functions:
       handler: handler.saveCertificadosCesionDb
       environment:
         REGION_SECRET : 'us-east-2'
-        SECRET_NAME : 'dev/mysql'
+        SECRET_NAME_DB : 'dev/mysql'
         SNS_TOPIC_ARN :  !Ref DbCertfTopic
       role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
       dependsOn:

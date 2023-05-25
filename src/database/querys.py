@@ -3,24 +3,36 @@ import datetime as dt
 
 ## database con
 from src.database.database import DatabaseSession
+from src.database import database
 
+database.retrieve_url_conn()
 
-# def format_datetime(date_string: str) -> dt.datetime:
-#     datetime_format = "%d:%m:%Y %H:%M"
-#     date_format = "%d:%m:%Y"
+def validate_records(folio,rut_deudor,rut_cliente):
+    """Query para validar que no exista la cesion ya en base de datos, esto permitira llamar solo lo necesario cuando se haga el scrapper
 
-#     try:
-#         fecha_con_hora = dt.datetime.strptime(date_string, datetime_format)
-#         return fecha_con_hora
-#     except ValueError:
-#         try:
-#             fecha_sin_hora = dt.datetime.strptime(date_string, date_format)
-#             return fecha_sin_hora
-#         except ValueError:
-#             print("El formato de fecha proporcionado no es válido.")
-#             return None
+    Args:
+        folio (string): folio documento
+        rut_deudor (string): rut deudor (deudor)
+        rut_cliente (rut_cliente): rut cliente (cliente)
+    """
     
+    DatabaseSession()
     
+    sql = """
+        SELECT ah.id hist_id, aa.id aec_id, ac.id certf_id 
+        from
+        api_historialcesiones ah 
+        left join api_aeccesion aa on(aa.historialcesion_id = ah.id)
+        left join api_cesionesarrayan ac on(ac.rut_deudor = ah.deudor and ac.company_id = ah.company_id and ac.folio = ah.folio_doc)
+        where 
+        ah.vendedor  =  :rut_cliente 
+        and ah.deudor  =  :rut_deudor 
+        and ah.folio_doc = :folio
+        and ah.cesionario  = '76865845-5'
+        order by ah.date_created desc
+    """
+    result = DatabaseSession.execute_query(query=sql, params={'rut_cliente':rut_cliente, 'rut_deudor':rut_deudor, 'folio': folio})    
+    return result
 
 def get_company_id(rut_cliente):
     

@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 def retrieve_url_conn():
     global url_con
 
-    secret_name = os.environ.get('SECRET_NAME')
+    secret_name = os.environ.get('SECRET_NAME_DB')
     secret_region = os.environ.get('REGION_SECRET')
-    
+        
     secrets = get_secrets(secret=secret_name,region=secret_region)
     password = secrets['password']
     username = secrets['username']

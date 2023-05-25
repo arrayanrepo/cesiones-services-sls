@@ -10,10 +10,6 @@ from src.secrets import secrets
 # cesiones
 from src.robots import get_cesiones, get_aec, get_certificados
 
-
-# database
-from src.database import database
-
 # querys
 from src.database import querys
 
@@ -22,7 +18,7 @@ def get_cesiones_simpli(event, context):
     
     
     region_secret = os.environ.get('REGION_SECRET')
-    secret_name = os.environ.get('SECRET_NAME')
+    secret_name = os.environ.get('SECRET_NAME_SII')
 
     dias = event['dias']
     tipo_consulta = event['tipo_consulta']
@@ -38,7 +34,7 @@ def get_cesiones_simpli(event, context):
         'total_cesiones': len(cesiones),
     }
 
-    print(f'RESPONSE => {payload}')
+    print(f'EVENT FINISH AT {dt.datetime.now()} => {payload}')
 
     return {"statusCode": 200, "body": json.dumps(payload)}
 
@@ -46,7 +42,7 @@ def get_cesiones_simpli(event, context):
 def get_aec_file(event, context):
 
     region_secret = os.environ.get('REGION_SECRET')
-    secret_name = os.environ.get('SECRET_NAME')
+    secret_name = os.environ.get('SECRET_NAME_SII')
 
     # get secrets
     _secrets = secrets.get_secrets(secret=secret_name, region=region_secret)
@@ -70,7 +66,7 @@ def get_aec_file(event, context):
 def get_certificado_cesion(event, context):
 
     region_secret = os.environ.get('REGION_SECRET')
-    secret_name = os.environ.get('SECRET_NAME')
+    secret_name = os.environ.get('SECRET_NAME_SII')
     dias = os.environ.get("DAYS")
 
     # get secrets
@@ -119,7 +115,7 @@ def insert_hc_db(event, context):
         "date_created": dt.datetime.now(),
     }
 
-    database.retrieve_url_conn()
+    # database.retrieve_url_conn()
 
     result = querys.save_historial_cesion(data=cesion)
 
@@ -137,7 +133,7 @@ def saveAecRegisterDb(event, context):
         'url_file': data['url_file'],
     }
 
-    database.retrieve_url_conn()
+    # database.retrieve_url_conn()
 
     result = querys.insert_aec_file(data=aec_record)
 
@@ -146,7 +142,7 @@ def saveAecRegisterDb(event, context):
     
 def saveCertificadosCesionDb(event, context):
 
-    print(f'Event => {event}')
+    print(f'Event FINISH  => {event}')
     data = json.loads(event['Records'][0]['Sns']['Message'])
 
     certificado_record = {
@@ -156,8 +152,19 @@ def saveCertificadosCesionDb(event, context):
         'url_file': data['url_file'],
     }
 
-    database.retrieve_url_conn()
+    # database.retrieve_url_conn()
 
     result = querys.insert_certificado_file(data=certificado_record)
 
     return {"statusCode": 200, 'insert_result': result}
+
+
+if __name__ == "__main__":
+    
+    context= {}
+    event = {
+        'dias': 1,
+        'tipo_consulta': 2
+    }
+    
+    get_cesiones_simpli(event=event, context=context)
