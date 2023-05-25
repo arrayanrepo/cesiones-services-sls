@@ -80,7 +80,6 @@ def clean_cesiones(data):
                     'fch_vencimiento': info[17]
                 }
                 
-                print(f'SEND MESSAGE TO SNS => {obj}')
                 
                 snsTopic.publish_event(message=json.dumps(obj))
                 cesiones.append(obj)
