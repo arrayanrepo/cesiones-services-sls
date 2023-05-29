@@ -15,8 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 def retrieve_url_conn():
-    global url_con
-
     secret_name = os.environ.get('SECRET_NAME_DB')
     secret_region = os.environ.get('REGION_SECRET')
         
@@ -26,21 +24,20 @@ def retrieve_url_conn():
     host = secrets['host']
     database = secrets['database']
     
-    url_con = f'mysql+pymysql://{username}:{password}@{host}/{database}'
+    return  f'mysql+pymysql://{username}:{password}@{host}/{database}'
 
 class DatabaseSession:
     
     __instance = None
-    
+        
     def __new__(cls):
         
         if cls.__instance is None:
+            url_con = retrieve_url_conn()
             print('No existe la instancia')
             engine = create_engine(url=url_con)
             Session = scoped_session(sessionmaker(bind=engine))
             cls.__instance = Session()
-        
-        print('isando la misma instancia')
         return cls.__instance
 
     @classmethod

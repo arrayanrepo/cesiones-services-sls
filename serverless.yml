@@ -21,16 +21,22 @@ resources:
         DisplayName: DbAecTopic
         TopicName: DbAecTopic
 
+    DBPdfTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: DBPdfTopic
+        TopicName: DBPdfTopic
+
     DbCertfTopic:
       Type: AWS::SNS::Topic
       Properties:
         DisplayName: DbCertfTopic
         TopicName: DbCertfTopic
 
-    cesionServiceRole:
+    getCesionesRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: cesionServiceRole
+        RoleName: getCesionesRole
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -145,8 +151,17 @@ resources:
                   Action:
                     - "sns:ListSubscriptionsByTopic"
                     - "sns:Subscribe"
+                  Resource: !GetAtt DBPdfTopic.TopicArn
+
+                - Effect: Allow
+                  Action:
+                    - "sns:ListSubscriptionsByTopic"
+                    - "sns:Subscribe"
                   Resource: !GetAtt DbAecTopic.TopicArn
 
+                - Effect: Allow
+                  Action: "s3:PutObject"
+                  Resource: ["arn:aws:s3:::arrayanfilesqa/aec_files","arn:aws:s3:::arrayanfilesqa/*"]
 
 functions:
   getCesionesSimpli:
@@ -156,11 +171,12 @@ functions:
         SECRET_NAME_SII : 'sii/simpli'
         SECRET_NAME_DB : 'dev/mysql'
         SNS_TOPIC_ARN : !Ref snsTopic
-    role: { "Fn::GetAtt": ["cesionServiceRole", "Arn"] }
+    role: { "Fn::GetAtt": ["getCesionesRole", "Arn"] }
+    timeout: 30
     events:
       - schedule: 
           rate: cron(*/5 * * * ? *)
-          enabled: false
+          enabled: true
           input:
             dias: 1
             tipo_consulta: 2
@@ -168,7 +184,7 @@ functions:
   getAecXMLFile:
       handler: handler.get_aec_file
       environment:
-        SUB_DIR: 'aec_files'
+        SUBDIR: 'aec_files'
         REGION_SECRET : 'us-east-2'
         BUCKET_NAME : 'arrayanfilesqa'
         SECRET_NAME_SII : 'sii/simpli'
@@ -186,7 +202,7 @@ functions:
   getCertificadoCesion:
       handler: handler.get_certificado_cesion
       environment:
-        SUB_DIR: 'certificados_cesion'
+        SUBDIR: 'certificados_cesion'
         BUCKET_NAME : 'arrayanfilesqa'
         REGION_SECRET : 'us-east-2'
         SECRET_NAME_SII : 'sii/simpli'
@@ -211,7 +227,6 @@ functions:
         REGION_SECRET : 'us-east-2'
         SECRET_NAME_DB : 'dev/mysql'
         SNS_TOPIC_ARN :  !Ref snsTopic
-        
       role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
       dependsOn:
         - "snsTopic"
@@ -237,12 +252,32 @@ functions:
             topicName: DbAecTopic
             arn: { "Fn::GetAtt": ["DbAecTopic", "TopicArn"] }
 
+  generatePDFCesion:
+      handler: handler.generatePDFCesion
+      environment:
+        REGION_SECRET : 'us-east-2'
+        BUCKET_NAME : 'arrayanfilesqa'
+        SUBDIR: 'facturas_pdf'
+        SNS_TOPIC_ARN :  !Ref DbAecTopic
+      role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
+      dependsOn:
+        - "snsTopic"
+        - "DbAecTopic"
+      events:
+        - sns:
+            displayName: Get data from DbAecTopic and generate PDF
+            topicName: DbAecTopic
+            arn: { "Fn::GetAtt": ["DbAecTopic", "TopicArn"] }
+      
+      layers:
+        - "arn:aws:lambda:us-east-2:746907585706:layer:wkhtmltox-01264:2"
+
   saveCertificadoCesionDB:
       handler: handler.saveCertificadosCesionDb
       environment:
         REGION_SECRET : 'us-east-2'
         SECRET_NAME_DB : 'dev/mysql'
-        SNS_TOPIC_ARN :  !Ref DbCertfTopic
+        SNS_TOPIC_ARN :  !Ref DBPdfTopic
       role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
       dependsOn:
         - "snsTopic"
@@ -252,6 +287,21 @@ functions:
             displayName: Get data from DbCertfTopic and save in DB
             topicName: DbCertfTopic
             arn: { "Fn::GetAtt": ["DbCertfTopic", "TopicArn"] }
+
+  savePDFFactura:
+      handler: handler.savePDFFactura
+      environment:
+        REGION_SECRET : 'us-east-2'
+        SECRET_NAME_DB : 'dev/mysql'
+        SNS_TOPIC_ARN :  !Ref DBPdfTopic
+      role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
+      dependsOn:
+        - "DBPdfTopic"
+      events:
+        - sns:
+            displayName: Get data from DBPdfTopic and save in DB
+            topicName: DBPdfTopic
+            arn: { "Fn::GetAtt": ["DBPdfTopic", "TopicArn"] }
 
 outputs:
   snsTopicArn:

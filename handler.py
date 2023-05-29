@@ -3,19 +3,22 @@ import json
 import os
 import datetime as dt
 
+## utils
+from src.utils import utils
 
 # secrets
 from src.secrets import secrets
 
 # cesiones
-from src.robots import get_cesiones, get_aec, get_certificados
+from src.robots import get_cesiones, get_aec, get_certificados, get_factura_info
 
 # querys
 from src.database import querys
 
 
+
 def get_cesiones_simpli(event, context):
-    
+
     
     region_secret = os.environ.get('REGION_SECRET')
     secret_name = os.environ.get('SECRET_NAME_SII')
@@ -34,13 +37,14 @@ def get_cesiones_simpli(event, context):
         'total_cesiones': len(cesiones),
     }
 
-    print(f'EVENT FINISH AT {dt.datetime.now()} => {payload}')
+    print(f'EVENT FINISH AT {utils.get_today()} => {payload}')
 
     return {"statusCode": 200, "body": json.dumps(payload)}
 
 
 def get_aec_file(event, context):
 
+    
     region_secret = os.environ.get('REGION_SECRET')
     secret_name = os.environ.get('SECRET_NAME_SII')
 
@@ -90,6 +94,7 @@ def get_certificado_cesion(event, context):
 
 def insert_hc_db(event, context):
 
+    
     data = json.loads(event['Records'][0]['Sns']['Message'])
 
     cesion = {
@@ -112,14 +117,14 @@ def insert_hc_db(event, context):
         "mnt_cesion": data['mnt_cesion'],
         "fecha_vencimiento": data['fch_vencimiento'],
         "company_id": None,
-        "date_created": dt.datetime.now(),
+        "date_created": utils.get_today(),
     }
 
-    # database.retrieve_url_conn()
 
     result = querys.save_historial_cesion(data=cesion)
 
     return {"statusCode": 200, 'insert_result': result}
+
 
 
 def saveAecRegisterDb(event, context):
@@ -133,15 +138,14 @@ def saveAecRegisterDb(event, context):
         'url_file': data['url_file'],
     }
 
-    # database.retrieve_url_conn()
-
-    result = querys.insert_aec_file(data=aec_record)
+    result = querys.post_aec_file(data=aec_record)
 
     return {"statusCode": 200, 'insert_result': result}
     
     
 def saveCertificadosCesionDb(event, context):
 
+    
     print(f'Event FINISH  => {event}')
     data = json.loads(event['Records'][0]['Sns']['Message'])
 
@@ -152,19 +156,44 @@ def saveCertificadosCesionDb(event, context):
         'url_file': data['url_file'],
     }
 
-    # database.retrieve_url_conn()
 
     result = querys.insert_certificado_file(data=certificado_record)
 
     return {"statusCode": 200, 'insert_result': result}
 
 
-if __name__ == "__main__":
+def generatePDFCesion(event, context):
+    print(f'Event FINISH  => {event}')
     
-    context= {}
-    event = {
-        'dias': 1,
-        'tipo_consulta': 2
+    data = json.loads(event['Records'][0]['Sns']['Message'])
+    
+    
+    aec_record = {
+        'rut_cliente': data['rut_cliente'],
+        'rut_deudor': data['rut_deudor'],
+        'folio': data['folio'],
+        'url_file': data['url_file'],
     }
     
-    get_cesiones_simpli(event=event, context=context)
+    url = get_factura_info.run(data=aec_record)
+    
+    
+    return {"statusCode": 200, 'url':url}
+
+
+
+def savePDFFactura(event,context):
+    
+    
+    data = json.loads(event['Records'][0]['Sns']['Message'])
+    
+    pdf_record = {
+        'rut_cliente': data['rut_cliente'],
+        'rut_deudor': data['rut_deudor'],
+        'folio': data['folio'],
+        'url_file': data['url_file'],
+    }
+    
+    result = querys.savePDFFile(data=pdf_record)
+    
+    return {"statusCode": 200, 'insert_result': result}
