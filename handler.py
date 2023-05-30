@@ -220,17 +220,17 @@ def insert_record_db(event,context):
     
 #     return {"statusCode": 200, 'insert_result': result}
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     
-    context = {}
-    event = {
-        'Records': [
-            {
-                'Sns': {
-                    'Message': json.dumps({'rut_cliente':'76105293-4','estado_cesion':'CesionVigente','rut_deudor':'81949100-3','mail_deudor':'null','tipo_documento':'33','nombre_doc':'FacturaElectronica','folio':'7741','fch_emis_dte':'2023-05-25','mnt_total':'505750','cedente':'76105293-4','rz_cedente':'INTERPRINTS.A.','mail_cedente':'secretaria@interprint.cl','cesionario':'76865845-5','rz_cesionario':'SIMPLIS.A.','mail_cesionario':'CESIONES@SIMPLILATAM.COM','fch_cesion':'2023-05-2918:10','mnt_cesion':'505750','fch_vencimiento':'2023-05-25'})
-                }
-            }
-        ]
-    }
+#     context = {}
+#     event = {
+#         'Records': [
+#             {
+#                 'Sns': {
+#                     'Message': json.dumps({'rut_cliente':'76105293-4','rut_deudor':'81949100-3','tipo_documento':'33','folio':'7741','url_file':'https://arrayanfilesqa.s3.amazonaws.com/aec_files/30_05_2023/AEC_76105293_4_7741_81949100_3.xml','event_type': 1})
+#                 }
+#             }
+#         ]
+#     }
     
-    get_aec_file(context=context, event=event)
+#     generatePDFCesion(context=context, event=event)
