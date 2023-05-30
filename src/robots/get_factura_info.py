@@ -38,6 +38,7 @@ def run(data):
         'rut_deudor': data['rut_deudor'],
         'folio': data['folio'],
         'url_file': data['url_file'],
+        'event_type': 3
         }
         
         snsTopic.publish_event(message=json.dumps(message))

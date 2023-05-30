@@ -77,6 +77,7 @@ def save_file(documento,data):
             'rut_deudor': documento['rut_deudor'],
             'folio': documento['folio'],
             'url_file': file_url,
+            'event_type': 1
         }
         snsTopic.publish_event(message=json.dumps(message))
         

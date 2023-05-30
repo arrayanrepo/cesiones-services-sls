@@ -7,36 +7,27 @@ provider:
   runtime: python3.8
 
 resources:
+  
   Resources:
 
-    snsTopic:
+    GetCesionesTopic:
       Type: AWS::SNS::Topic
       Properties:
-        DisplayName: snsTopicCesion
-        TopicName: snsTopicCesion    
+        DisplayName: GetCesionesTopic
+        TopicName: GetCesionesTopic    
 
-    DbAecTopic:
+    DbInsertTopic:
       Type: AWS::SNS::Topic
       Properties:
-        DisplayName: DbAecTopic
-        TopicName: DbAecTopic
+        DisplayName: DbInsertTopic
+        TopicName: DbInsertTopic
 
-    DBPdfTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        DisplayName: DBPdfTopic
-        TopicName: DBPdfTopic
-
-    DbCertfTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        DisplayName: DbCertfTopic
-        TopicName: DbCertfTopic
-
-    getCesionesRole:
+    ## role que tiene acceso a los secretos de la base de datos y de la clave de simpli del sii
+    ## podra evaluar si es necesario publicar el mensaje en los demas 
+    GetCesionesRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: getCesionesRole
+        RoleName: GetCesionesRole
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -52,26 +43,30 @@ resources:
             PolicyDocument: 
               Version: '2012-10-17'
               Statement:
+
+                ## simpli sii secrets
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
                   Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84"
                 
+                ## database secrets
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
                   Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
                 
+                ## permitir publicar en el topic
                 - Effect: Allow
                   Action:
                     - sns:Publish
-                  Resource: !Ref snsTopic
+                  Resource: !Ref GetCesionesTopic
           
       
-    aecConsumerSNSConsumerRole:
+    ConsumerProcessCesionRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: aecConsumerSNSConsumerRole
+        RoleName: ConsumerProcessCesionRole
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -83,95 +78,59 @@ resources:
         ManagedPolicyArns:
           - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         Policies:
-          - PolicyName: aecConsumerSNSConsumerPolicyDocument
+          - PolicyName: ConsumerProcessCesionRolePolicyDocument
             PolicyDocument: 
               Version: '2012-10-17'
               Statement:
-                - Effect: Allow
-                  Action:
-                    - 'secretsmanager:GetSecretValue'
-                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84"
-                - Effect: Allow
-                  Action:
-                    - "sns:ListSubscriptionsByTopic"
-                    - "sns:Subscribe"
-                  Resource: !GetAtt snsTopic.TopicArn
-                
-                - Effect: Allow
-                  Action: "s3:PutObject"
-                  Resource: ["arn:aws:s3:::arrayanfilesqa/aec_files","arn:aws:s3:::arrayanfilesqa/*"]
 
-                - Effect: Allow
-                  Action:
-                    - sns:Publish
-                  Resource: !Ref DbAecTopic
-
-                - Effect: Allow
-                  Action:
-                    - sns:Publish
-                  Resource: !Ref DbCertfTopic
-          
-    DBConsumerSNSConsumerRole:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: DBConsumerSNSConsumerRole
-        AssumeRolePolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-              Action: sts:AssumeRole
-        ManagedPolicyArns:
-          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-        Policies:
-          - PolicyName: DBConsumerSNSConsumerRolePolicyDocument
-            PolicyDocument: 
-              Version: '2012-10-17'
-              Statement:
+                ## permitir obtener los secretos de la db
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
                   Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
                 
+                ## permitir obtener los secretos de simpli sii
+                - Effect: Allow
+                  Action:
+                    - 'secretsmanager:GetSecretValue'
+                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84"
+                
+                ## subscribirse al SNS topic donde seran publicados los eventos
+                ## que luego de ser procesados para guardase(HistorialCesion,AEC,Certificado,PDF Factura)
                 - Effect: Allow
                   Action:
                     - "sns:ListSubscriptionsByTopic"
                     - "sns:Subscribe"
-                  Resource: !GetAtt snsTopic.TopicArn
+                  Resource: !GetAtt GetCesionesTopic.TopicArn
 
+                ## permitir publicar eventos en el topico que manejara la insercion de los registros
+                ## en base a un parametro
                 - Effect: Allow
                   Action:
-                    - "sns:ListSubscriptionsByTopic"
-                    - "sns:Subscribe"
-                  Resource: !GetAtt DbCertfTopic.TopicArn
-
-                - Effect: Allow
-                  Action:
-                    - "sns:ListSubscriptionsByTopic"
-                    - "sns:Subscribe"
-                  Resource: !GetAtt DBPdfTopic.TopicArn
-
-                - Effect: Allow
-                  Action:
-                    - "sns:ListSubscriptionsByTopic"
-                    - "sns:Subscribe"
-                  Resource: !GetAtt DbAecTopic.TopicArn
-
+                    - "sns:Publish"
+                  Resource: !GetAtt DbInsertTopic.TopicArn
+                
+                ## acceso al bucket s3 para subir archivos (certificado, AEC, PDF Facturas)
                 - Effect: Allow
                   Action: "s3:PutObject"
-                  Resource: ["arn:aws:s3:::arrayanfilesqa/aec_files","arn:aws:s3:::arrayanfilesqa/*"]
+                  Resource: [
+                    "arn:aws:s3:::arrayanfilesqa/aec_files",
+                    "arn:aws:s3:::arrayanfilesqa/certificados_cesion",
+                    "arn:aws:s3:::arrayanfilesqa/facturas_pdf",
+                  ]
 
 functions:
+
+  ## funcion lambda para obtener las cesiones del dia de simpli
+  ## necesita acceder a los secretos de db y a la clave de simpli del sii
   getCesionesSimpli:
     handler: handler.get_cesiones_simpli
     environment:
         REGION_SECRET : 'us-east-2'
         SECRET_NAME_SII : 'sii/simpli'
         SECRET_NAME_DB : 'dev/mysql'
-        SNS_TOPIC_ARN : !Ref snsTopic
-    role: { "Fn::GetAtt": ["getCesionesRole", "Arn"] }
+        SNS_TOPIC_ARN : !Ref GetCesionesTopic
+    role: { "Fn::GetAtt": ["GetCesionesRole", "Arn"] }
     timeout: 30
     events:
       - schedule: 
@@ -180,7 +139,27 @@ functions:
           input:
             dias: 1
             tipo_consulta: 2
+  
+  ## procesa el evento de GetCesionesTopic para guardar en historial cesiones
+  ## tiene acceso a los secretos de db y suscribirse al topico GetCesionesTopic
+  saveCesionInDb:
+      handler: handler.insert_hc_db
+      environment:
+        REGION_SECRET : 'us-east-2'
+        SECRET_NAME_DB : 'dev/mysql'
+        SNS_TOPIC_ARN :  !Ref GetCesionesTopic
+      role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
+      dependsOn:
+        - "GetCesionesTopic"
+        - "DbInsertTopic"
+      events:
+        - sns:
+            displayName: Guarda el registro en la DB en historial_cesiones cuando un evento en publicado en GetCesionesTopic
+            topicName: GetCesionesTopic
+            arn: { "Fn::GetAtt": ["GetCesionesTopic", "TopicArn"] }
 
+  ## funcion que procesa mensajes publicados en el getCesionesTopic para luego extraer los AEC(xml)
+  ## debe tener permisos para acceder al topico getCesionesTopic y publicar en el topico (DbInsertTopic) para que sea guardado el AEC
   getAecXMLFile:
       handler: handler.get_aec_file
       environment:
@@ -188,17 +167,19 @@ functions:
         REGION_SECRET : 'us-east-2'
         BUCKET_NAME : 'arrayanfilesqa'
         SECRET_NAME_SII : 'sii/simpli'
-        SNS_TOPIC_ARN :  !Ref DbAecTopic
-      role: { "Fn::GetAtt": ["aecConsumerSNSConsumerRole", "Arn"] }
+        SNS_TOPIC_ARN :  !Ref DbInsertTopic
+      role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
       dependsOn:
-        - "snsTopic"
-        - "DbAecTopic"
+        - "GetCesionesTopic"
+        - "DbInsertTopic"
       events:
         - sns:
-            displayName: Extract Aec File from cesion
-            topicName: snsTopic
-            arn: { "Fn::GetAtt": ["snsTopic", "TopicArn"] }
-    
+            displayName: Extrae los AEC cuando un evento es publicado en GetCesionesTopic
+            topicName: GetCesionesTopic
+            arn: { "Fn::GetAtt": ["GetCesionesTopic", "TopicArn"] }
+  
+  ## funcion que procesa mensajes publicados en el getCesionesTopic para luego extraer los El certificado de Cesion
+  ## debe tener permisos para acceder al topico getCesionesTopic y publicar en el topico (DbInsertTopic) para que sea guardado el Certificado
   getCertificadoCesion:
       handler: handler.get_certificado_cesion
       environment:
@@ -206,115 +187,52 @@ functions:
         BUCKET_NAME : 'arrayanfilesqa'
         REGION_SECRET : 'us-east-2'
         SECRET_NAME_SII : 'sii/simpli'
-        SNS_TOPIC_ARN :  !Ref DbCertfTopic
+        SNS_TOPIC_ARN :  !Ref DbInsertTopic
         DAYS : 10
-      role: { "Fn::GetAtt": ["aecConsumerSNSConsumerRole", "Arn"] }
+      role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
       dependsOn:
-        - "snsTopic"
-        - "DbCertfTopic"
+        - "GetCesionesTopic"
+        - "DbInsertTopic"
       events:
         - sns:
-            displayName: Extract Aec File from cesion
-            topicName: snsTopic
-            arn: { "Fn::GetAtt": ["snsTopic", "TopicArn"] }
+            displayName: Extrae los certificados de cesion cuando un evento es publicado en GetCesionesTopic
+            topicName: GetCesionesTopic
+            arn: { "Fn::GetAtt": ["GetCesionesTopic", "TopicArn"] }
 
       layers:
         - "arn:aws:lambda:us-east-2:746907585706:layer:wkhtmltox-01264:2"
 
-  saveCesionInDb:
-      handler: handler.insert_hc_db
-      environment:
-        REGION_SECRET : 'us-east-2'
-        SECRET_NAME_DB : 'dev/mysql'
-        SNS_TOPIC_ARN :  !Ref snsTopic
-      role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
-      dependsOn:
-        - "snsTopic"
-      events:
-        - sns:
-            displayName: Get data from snsTopic and save in DB
-            topicName: snsTopic
-            arn: { "Fn::GetAtt": ["snsTopic", "TopicArn"] }
-
-  saveAecRegisterDb:
-      handler: handler.saveAecRegisterDb
-      environment:
-        REGION_SECRET : 'us-east-2'
-        SECRET_NAME_DB : 'dev/mysql'
-        SNS_TOPIC_ARN :  !Ref DbAecTopic
-      role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
-      dependsOn:
-        - "snsTopic"
-        - "DbAecTopic"
-      events:
-        - sns:
-            displayName: Get data from DbAecTopic and save in DB
-            topicName: DbAecTopic
-            arn: { "Fn::GetAtt": ["DbAecTopic", "TopicArn"] }
-
+  ## funcion para generar el PDF de la factura luego que sea extraido el AEC(XML)
+  ## debe tener acceso al bucket para guardar el archivo y obtener el AEC del bucket
+  ## debe poder subscribirse al topico que guarda el aec en base de datos y tambien generar un mensaje para que sea guardado el registro
   generatePDFCesion:
       handler: handler.generatePDFCesion
       environment:
         REGION_SECRET : 'us-east-2'
         BUCKET_NAME : 'arrayanfilesqa'
         SUBDIR: 'facturas_pdf'
-        SNS_TOPIC_ARN :  !Ref DbAecTopic
-      role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
+        SNS_TOPIC_ARN :  !Ref DbInsertTopic
+      role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
       dependsOn:
-        - "snsTopic"
-        - "DbAecTopic"
+        - "GetCesionesTopic"
+        - "DbInsertTopic"
       events:
         - sns:
-            displayName: Get data from DbAecTopic and generate PDF
-            topicName: DbAecTopic
-            arn: { "Fn::GetAtt": ["DbAecTopic", "TopicArn"] }
+            displayName: Procesar el evento luego de que se descargar el AEC
+            topicName: DbInsertTopic
+            arn: { "Fn::GetAtt": ["DbInsertTopic", "TopicArn"] }
       
       layers:
         - "arn:aws:lambda:us-east-2:746907585706:layer:wkhtmltox-01264:2"
 
-  saveCertificadoCesionDB:
-      handler: handler.saveCertificadosCesionDb
-      environment:
-        REGION_SECRET : 'us-east-2'
-        SECRET_NAME_DB : 'dev/mysql'
-        SNS_TOPIC_ARN :  !Ref DBPdfTopic
-      role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
-      dependsOn:
-        - "snsTopic"
-        - "DbCertfTopic"
-      events:
-        - sns:
-            displayName: Get data from DbCertfTopic and save in DB
-            topicName: DbCertfTopic
-            arn: { "Fn::GetAtt": ["DbCertfTopic", "TopicArn"] }
-
-  savePDFFactura:
-      handler: handler.savePDFFactura
-      environment:
-        REGION_SECRET : 'us-east-2'
-        SECRET_NAME_DB : 'dev/mysql'
-        SNS_TOPIC_ARN :  !Ref DBPdfTopic
-      role: { "Fn::GetAtt": ["DBConsumerSNSConsumerRole", "Arn"] }
-      dependsOn:
-        - "DBPdfTopic"
-      events:
-        - sns:
-            displayName: Get data from DBPdfTopic and save in DB
-            topicName: DBPdfTopic
-            arn: { "Fn::GetAtt": ["DBPdfTopic", "TopicArn"] }
-
 outputs:
-  snsTopicArn:
+  GetCesionesTopicArn:
     Value:
-      Fn::GetAtt: [snsTopic, TopicArn]
+      Fn::GetAtt: [GetCesionesTopic, TopicArn]
 
-  DbAecTopicArn:
+  DbInsertTopic:
     Value:
-      Fn::GetAtt: [DbAecTopic, TopicArn]
-
-  DbCertfTopic:
-    Value:
-      Fn::GetAtt: [DbCertfTopic, TopicArn]
+      Fn::GetAtt: [DbInsertTopic, TopicArn]
 
 plugins:
   - serverless-python-requirements

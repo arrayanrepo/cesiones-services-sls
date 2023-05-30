@@ -44,6 +44,7 @@ def fetch_get_cesiones(session,cookies,tipo_consulta, desde, hasta):
     try:
         response = session.post(url, headers=headers, data=payload, cookies=cookies)
         logger.info("Cesiones obtenidas")
+        session.close()
         return response.text
     except Exception as err:
         logger.info("No fue posible obtener las cesiones")
@@ -90,6 +91,7 @@ def clean_cesiones(data):
                         return cesiones
                     else:
                         snsTopic.publish_event(message=json.dumps(obj))
+                        print(f'Message => {obj}')
                         cesiones.append(obj)
                 else:
                     snsTopic.publish_event(message=json.dumps(obj))

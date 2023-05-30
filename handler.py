@@ -13,7 +13,7 @@ from src.secrets import secrets
 from src.robots import get_cesiones, get_aec, get_certificados, get_factura_info
 
 # querys
-from src.database import querys
+from src.database import querys,query_manager
 
 
 
@@ -126,48 +126,13 @@ def insert_hc_db(event, context):
     return {"statusCode": 200, 'insert_result': result}
 
 
-
-def saveAecRegisterDb(event, context):
-
-    print(f'Event => {event}')
-    data = json.loads(event['Records'][0]['Sns']['Message'])
-    aec_record = {
-        'rut_cliente': data['rut_cliente'],
-        'rut_deudor': data['rut_deudor'],
-        'folio': data['folio'],
-        'url_file': data['url_file'],
-    }
-
-    result = querys.post_aec_file(data=aec_record)
-
-    return {"statusCode": 200, 'insert_result': result}
-    
-    
-def saveCertificadosCesionDb(event, context):
-
-    
-    print(f'Event FINISH  => {event}')
-    data = json.loads(event['Records'][0]['Sns']['Message'])
-
-    certificado_record = {
-        'rut_cliente': data['rut_cliente'],
-        'rut_deudor': data['rut_deudor'],
-        'folio': data['folio'],
-        'url_file': data['url_file'],
-    }
-
-
-    result = querys.insert_certificado_file(data=certificado_record)
-
-    return {"statusCode": 200, 'insert_result': result}
-
-
 def generatePDFCesion(event, context):
-    print(f'Event FINISH  => {event}')
-    
+
     data = json.loads(event['Records'][0]['Sns']['Message'])
     
-    
+    if int(data['event_type']) != 1:
+        return {"statusCode": 200, 'url':None} 
+        
     aec_record = {
         'rut_cliente': data['rut_cliente'],
         'rut_deudor': data['rut_deudor'],
@@ -180,20 +145,92 @@ def generatePDFCesion(event, context):
     
     return {"statusCode": 200, 'url':url}
 
-
-
-def savePDFFactura(event,context):
+def insert_record_db(event,context):
     
+    """Funcion que maneja el proceso de insertado en la base de datos de 
     
+        AEC
+        Certificado de cesion
+        Historial cesiones
+        PDF de la factura
+    """
+    print(f'Event => {event}')
     data = json.loads(event['Records'][0]['Sns']['Message'])
-    
-    pdf_record = {
+
+    event_data = {
         'rut_cliente': data['rut_cliente'],
         'rut_deudor': data['rut_deudor'],
         'folio': data['folio'],
         'url_file': data['url_file'],
     }
     
-    result = querys.savePDFFile(data=pdf_record)
+    event_type = data['event_type']
+
+    result = query_manager.select_query(data=event_data, event_type=event_type)
+
+    return {"statusCode": 200, 'result': result}
+
+# def saveAecRegisterDb(event, context):
+
+#     print(f'Event => {event}')
+#     data = json.loads(event['Records'][0]['Sns']['Message'])
+#     aec_record = {
+#         'rut_cliente': data['rut_cliente'],
+#         'rut_deudor': data['rut_deudor'],
+#         'folio': data['folio'],
+#         'url_file': data['url_file'],
+#     }
+
+#     result = querys.post_aec_file(data=aec_record)
+
+#     return {"statusCode": 200, 'insert_result': result}
     
-    return {"statusCode": 200, 'insert_result': result}
+    
+# def saveCertificadosCesionDb(event, context):
+
+    
+#     print(f'Event FINISH  => {event}')
+#     data = json.loads(event['Records'][0]['Sns']['Message'])
+
+#     certificado_record = {
+#         'rut_cliente': data['rut_cliente'],
+#         'rut_deudor': data['rut_deudor'],
+#         'folio': data['folio'],
+#         'url_file': data['url_file'],
+#     }
+
+
+#     result = querys.insert_certificado_file(data=certificado_record)
+
+#     return {"statusCode": 200, 'insert_result': result}
+
+# def savePDFFactura(event,context):
+    
+    
+#     data = json.loads(event['Records'][0]['Sns']['Message'])
+    
+#     pdf_record = {
+#         'rut_cliente': data['rut_cliente'],
+#         'rut_deudor': data['rut_deudor'],
+#         'folio': data['folio'],
+#         'url_file': data['url_file'],
+#     }
+    
+#     result = querys.savePDFFile(data=pdf_record)
+    
+#     return {"statusCode": 200, 'insert_result': result}
+
+if __name__ == '__main__':
+    
+    context = {}
+    event = {
+        'Records': [
+            {
+                'Sns': {
+                    'Message': json.dumps({'rut_cliente':'76105293-4','estado_cesion':'CesionVigente','rut_deudor':'81949100-3','mail_deudor':'null','tipo_documento':'33','nombre_doc':'FacturaElectronica','folio':'7741','fch_emis_dte':'2023-05-25','mnt_total':'505750','cedente':'76105293-4','rz_cedente':'INTERPRINTS.A.','mail_cedente':'secretaria@interprint.cl','cesionario':'76865845-5','rz_cesionario':'SIMPLIS.A.','mail_cesionario':'CESIONES@SIMPLILATAM.COM','fch_cesion':'2023-05-2918:10','mnt_cesion':'505750','fch_vencimiento':'2023-05-25'})
+                }
+            }
+        ]
+    }
+    
+    get_aec_file(context=context, event=event)

@@ -242,7 +242,7 @@ def insert_certf_cesion(rut_deudor,rut_cliente,company_id,deudor_id,nombre_archi
     
     DatabaseSession.insert_row(sql,params=params)
 
-def post_aec_file(data):
+def insert_aec_file(data):
     
     
     try:

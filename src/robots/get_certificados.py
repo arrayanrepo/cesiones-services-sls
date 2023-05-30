@@ -52,7 +52,8 @@ def run(rut,password, days, cesion):
             'rut_cliente' : cesion['rut_cliente'],
             'rut_deudor': cesion['rut_deudor'],
             'folio': cesion['folio'],
-            'url_file': file_url
+            'url_file': file_url,
+            'event_type': 2
         }
         
         snsTopic.publish_event(message=json.dumps(message))
