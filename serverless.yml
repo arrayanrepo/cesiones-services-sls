@@ -135,7 +135,7 @@ functions:
     events:
       - schedule: 
           rate: cron(*/5 * * * ? *)
-          enabled: true
+          enabled: false
           input:
             dias: 1
             tipo_consulta: 2

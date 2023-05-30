@@ -36,6 +36,7 @@ def login(password, rut):
             headers=headers2,
             data=payload,
         )
+        print(f'SESSION => {init_sesion.text}')
         cookies = dict(init_sesion.cookies)
     except requests.exceptions.HTTPError as e:
         logger.info("No fue posible iniciar sesion")
@@ -50,6 +51,7 @@ def login(password, rut):
                 headers=headers2,
                 data=payload,
             )
+            print(f'SESSION 2 => {init_sesion.content}')
             cookies = dict(init_sesion.cookies)
         except requests.exceptions.HTTPError as e:
             logger.info("No fue posible iniciar sesion en reintento")
