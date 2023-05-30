@@ -154,7 +154,6 @@ def insert_record_db(event,context):
         Historial cesiones
         PDF de la factura
     """
-    print(f'Event => {event}')
     data = json.loads(event['Records'][0]['Sns']['Message'])
 
     event_data = {
@@ -169,68 +168,3 @@ def insert_record_db(event,context):
     result = query_manager.select_query(data=event_data, event_type=event_type)
 
     return {"statusCode": 200, 'result': result}
-
-# def saveAecRegisterDb(event, context):
-
-#     print(f'Event => {event}')
-#     data = json.loads(event['Records'][0]['Sns']['Message'])
-#     aec_record = {
-#         'rut_cliente': data['rut_cliente'],
-#         'rut_deudor': data['rut_deudor'],
-#         'folio': data['folio'],
-#         'url_file': data['url_file'],
-#     }
-
-#     result = querys.post_aec_file(data=aec_record)
-
-#     return {"statusCode": 200, 'insert_result': result}
-    
-    
-# def saveCertificadosCesionDb(event, context):
-
-    
-#     print(f'Event FINISH  => {event}')
-#     data = json.loads(event['Records'][0]['Sns']['Message'])
-
-#     certificado_record = {
-#         'rut_cliente': data['rut_cliente'],
-#         'rut_deudor': data['rut_deudor'],
-#         'folio': data['folio'],
-#         'url_file': data['url_file'],
-#     }
-
-
-#     result = querys.insert_certificado_file(data=certificado_record)
-
-#     return {"statusCode": 200, 'insert_result': result}
-
-# def savePDFFactura(event,context):
-    
-    
-#     data = json.loads(event['Records'][0]['Sns']['Message'])
-    
-#     pdf_record = {
-#         'rut_cliente': data['rut_cliente'],
-#         'rut_deudor': data['rut_deudor'],
-#         'folio': data['folio'],
-#         'url_file': data['url_file'],
-#     }
-    
-#     result = querys.savePDFFile(data=pdf_record)
-    
-#     return {"statusCode": 200, 'insert_result': result}
-
-# if __name__ == '__main__':
-    
-#     context = {}
-#     event = {
-#         'Records': [
-#             {
-#                 'Sns': {
-#                     'Message': json.dumps({'rut_cliente':'76105293-4','rut_deudor':'81949100-3','tipo_documento':'33','folio':'7741','url_file':'https://arrayanfilesqa.s3.amazonaws.com/aec_files/30_05_2023/AEC_76105293_4_7741_81949100_3.xml','event_type': 1})
-#                 }
-#             }
-#         ]
-#     }
-    
-#     generatePDFCesion(context=context, event=event)

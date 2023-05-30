@@ -34,7 +34,6 @@ class DatabaseSession:
         
         if cls.__instance is None:
             url_con = retrieve_url_conn()
-            print('No existe la instancia')
             engine = create_engine(url=url_con)
             Session = scoped_session(sessionmaker(bind=engine))
             cls.__instance = Session()
@@ -53,7 +52,7 @@ class DatabaseSession:
                 results.append(row._asdict())
             return results 
         except Exception as err:
-            print(f'Error executing query: %s' % err)
+            print(f'Error executing query: {err}')
             
     
     @classmethod
@@ -66,5 +65,5 @@ class DatabaseSession:
                 conn.execute(statement, params)
                 conn.commit()
             except Exception as err:
-                print("Error inserting row: %s" % err)
+                print(f"Error inserting row: {err}")
                 conn.rollback()

@@ -37,20 +37,20 @@ def download_s3_file(url):
 
 def save_to_s3(file,filename):
     now = utils.get_today().strftime('%d_%m_%Y')
+
     try:
         s3 = boto3.client('s3')
         # Sube el archivo al bucket de S3
-        s3.upload_file(file, BUCKET_NAME, f'{SUBDIR}/{now}/{filename}')
+        result = s3.upload_file(file, BUCKET_NAME, f'{SUBDIR}/{now}/{filename}')
+        print(f' UPLOADING FILE => {result}')
         # Genera la URL del archivo cargado
         url_file = f"https://{BUCKET_NAME}.s3.amazonaws.com/{SUBDIR}/{now}/{filename}"
-        logger.info(f'URL file {url_file}')
-        
         return url_file
     
-    except Exception as e:
-        logger.error("Ocurrió un error al subir el archivo a S3:", str(e))
+    except Exception as err:
+        logger.error(f"Ocurrió un error al subir el archivo a S3: {err}")
         raise Exception("No se puede subir el archivo")
-        
+
 
 def save_file(content,filename):    
     try:

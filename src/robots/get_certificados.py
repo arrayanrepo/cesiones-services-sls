@@ -62,5 +62,5 @@ def run(rut,password, days, cesion):
         
     except Exception as err:
         ## aqui volvemos a encolar la consulta en el queue
-        print(err)
+        print(f'ERROR AL OBTENER CERTIFICADOS: {err}')
         return {'statusCode': 400, 'error': "error al obtener el certificado"}

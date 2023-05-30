@@ -296,7 +296,7 @@ def insert_certificado_file(data):
         return False
     
     
-def insert_pdf_file(rut_deudor, rut_cliente, folio, url):
+def insert_pdf_file(data):
     
     
     try:
@@ -312,14 +312,14 @@ def insert_pdf_file(rut_deudor, rut_cliente, folio, url):
         """
         
         params = {
-            'rut_cliente':  rut_cliente,
-            'rut_deudor': rut_deudor,
-            'folio': folio,
-            'url': url
+            'rut_cliente':  data['rut_cliente'],
+            'rut_deudor': data['rut_deudor'],
+            'folio': data['folio'],
+            'url': data['url_file']
         }
         
         DatabaseSession.insert_row(sql,params=params)
         
     except Exception as err:
-        print(f'ERRO SAVE PDF FILE => {err}')
+        print(f'ERROR SAVE PDF FILE => {err}')
         return False

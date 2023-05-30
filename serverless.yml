@@ -114,10 +114,45 @@ resources:
                 - Effect: Allow
                   Action: "s3:PutObject"
                   Resource: [
-                    "arn:aws:s3:::arrayanfilesqa/aec_files",
-                    "arn:aws:s3:::arrayanfilesqa/certificados_cesion",
-                    "arn:aws:s3:::arrayanfilesqa/facturas_pdf",
+                    "arn:aws:s3:::arrayanfilesqa/aec_files/*",
+                    "arn:aws:s3:::arrayanfilesqa/certificados_cesion/*",
+                    "arn:aws:s3:::arrayanfilesqa/facturas_pdf/*",
                   ]
+      
+    DBAccessRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: DBAccessRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: DBAccessRolePolicyDocument
+            PolicyDocument: 
+              Version: '2012-10-17'
+              Statement:
+
+                ## permitir obtener los secretos de la db
+                - Effect: Allow
+                  Action:
+                    - 'secretsmanager:GetSecretValue'
+                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
+
+                ## permitir publicar eventos en el topico que manejara la insercion de los registros
+                ## en base a un parametro
+                - Effect: Allow
+                  Action:
+                    - "sns:ListSubscriptionsByTopic"
+                    - "sns:Subscribe"
+                  Resource: !GetAtt DbInsertTopic.TopicArn
+                
 
 functions:
 
@@ -134,10 +169,10 @@ functions:
     timeout: 30
     events:
       - schedule: 
-          rate: cron(*/5 * * * ? *)
+          rate: cron(*/5 5-22 ? * MON-FRI *)
           enabled: false
           input:
-            dias: 1
+            dias: 4
             tipo_consulta: 2
   
   ## procesa el evento de GetCesionesTopic para guardar en historial cesiones
@@ -219,6 +254,27 @@ functions:
       events:
         - sns:
             displayName: Procesar el evento luego de que se descargar el AEC
+            topicName: DbInsertTopic
+            arn: { "Fn::GetAtt": ["DbInsertTopic", "TopicArn"] }
+      
+      layers:
+        - "arn:aws:lambda:us-east-2:746907585706:layer:wkhtmltox-01264:2"
+
+  ## funcion para generar el manejo de los eventos en la base de datos
+  ## debe tener acceso a la base de datos (secreto)
+  insert_record_db:
+      handler: handler.insert_record_db
+      environment:
+        REGION_SECRET : 'us-east-2'
+        SECRET_NAME_DB : 'dev/mysql'
+        BUCKET_NAME : 'arrayanfilesqa'
+        SUBDIR: 'facturas_pdf'
+      role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
+      dependsOn:
+        - "DbInsertTopic"
+      events:
+        - sns:
+            displayName: Procesar el evento de guardado
             topicName: DbInsertTopic
             arn: { "Fn::GetAtt": ["DbInsertTopic", "TopicArn"] }
       
