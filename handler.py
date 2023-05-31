@@ -3,7 +3,7 @@ import json
 import os
 import datetime as dt
 
-## utils
+# utils
 from src.utils import utils
 
 # secrets
@@ -13,13 +13,11 @@ from src.secrets import secrets
 from src.robots import get_cesiones, get_aec, get_certificados, get_factura_info
 
 # querys
-from src.database import querys,query_manager
-
+from src.database import querys, query_manager
 
 
 def get_cesiones_simpli(event, context):
 
-    
     region_secret = os.environ.get('REGION_SECRET')
     secret_name = os.environ.get('SECRET_NAME_SII')
 
@@ -31,7 +29,8 @@ def get_cesiones_simpli(event, context):
     password = _secrets['pass_sii_simpli']
     rut = _secrets['user_sii_simpli']
 
-    cesiones = get_cesiones.run(rut=rut, password=password, days=dias, tipo_consulta=tipo_consulta)
+    cesiones = get_cesiones.run(
+        rut=rut, password=password, days=dias, tipo_consulta=tipo_consulta)
 
     payload = {
         'total_cesiones': len(cesiones),
@@ -44,7 +43,6 @@ def get_cesiones_simpli(event, context):
 
 def get_aec_file(event, context):
 
-    
     region_secret = os.environ.get('REGION_SECRET')
     secret_name = os.environ.get('SECRET_NAME_SII')
 
@@ -87,14 +85,16 @@ def get_certificado_cesion(event, context):
         'tipo_documento': data['tipo_documento']
     }
 
-    url_file = get_certificados.run(rut=rut, password=password, days=dias, cesion=cesion)
+    url_file = get_certificados.run(
+        rut=rut, password=password, days=dias, cesion=cesion)
 
+    print(f' URL FILE: {url_file}')
+    
     return {'statuCode': 200, 'url': url_file}
 
 
 def insert_hc_db(event, context):
 
-    
     data = json.loads(event['Records'][0]['Sns']['Message'])
 
     cesion = {
@@ -120,7 +120,6 @@ def insert_hc_db(event, context):
         "date_created": utils.get_today(),
     }
 
-
     result = querys.save_historial_cesion(data=cesion)
 
     return {"statusCode": 200, 'insert_result': result}
@@ -129,26 +128,25 @@ def insert_hc_db(event, context):
 def generatePDFCesion(event, context):
 
     data = json.loads(event['Records'][0]['Sns']['Message'])
-    
+
     if int(data['event_type']) != 1:
-        return {"statusCode": 200, 'url':None} 
-        
+        return {"statusCode": 200, 'url': None}
+
     aec_record = {
         'rut_cliente': data['rut_cliente'],
         'rut_deudor': data['rut_deudor'],
         'folio': data['folio'],
         'url_file': data['url_file'],
     }
-    
-    url = get_factura_info.run(data=aec_record)
-    
-    
-    return {"statusCode": 200, 'url':url}
 
-def insert_record_db(event,context):
-    
+    url = get_factura_info.run(data=aec_record)
+
+    return {"statusCode": 200, 'url': url}
+
+
+def insert_record_db(event, context):
     """Funcion que maneja el proceso de insertado en la base de datos de 
-    
+
         AEC
         Certificado de cesion
         Historial cesiones
@@ -162,9 +160,25 @@ def insert_record_db(event,context):
         'folio': data['folio'],
         'url_file': data['url_file'],
     }
-    
+
     event_type = data['event_type']
 
     result = query_manager.select_query(data=event_data, event_type=event_type)
 
     return {"statusCode": 200, 'result': result}
+
+
+if __name__ == '__main__':
+
+    context = {}
+    event = {
+        'Records': [
+            {
+                'Sns': {
+                    'Message': json.dumps({'rut_cliente': '76618748-K',  'rut_deudor': '96774580-4', 'tipo_documento': '33', 'folio': '5022'})
+                }
+            }
+        ]
+    }
+
+    get_certificado_cesion(context=context, event=event)
