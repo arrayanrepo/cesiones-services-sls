@@ -49,6 +49,8 @@ def download_aec(session, cookies, documento):
         }
 
         _result = session.post("https://palena.sii.cl/cgi_rtc/RTC/RTCDescargarXmlCons.cgi",headers=headers,data=payload,cookies=cookies)
+        session.get('https://zeusr.sii.cl/cgi_AUT2000/autTermino.cgi')
+        session.close()
         return save_file(documento=documento,data=_result)
 
     except Exception as err:

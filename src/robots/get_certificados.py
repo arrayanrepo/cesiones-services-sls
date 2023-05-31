@@ -29,6 +29,9 @@ def run(rut,password, days, cesion):
         table = certificado.consulta_individual(rut=rut,session=session, desde=desde, hasta=hasta, docto_certf=cesion)
         idx_check = parser_html.get_checked_certf_id(table=table, folio=cesion['folio'])
         certf_data = parser_html.get_data_certificado(checked=idx_check, session=session, desde=desde, hasta=hasta, docto_certf=cesion)
+        
+        session.get('https://zeusr.sii.cl/cgi_AUT2000/autTermino.cgi')
+        session.close()
         now = utils.get_today()
         
         obj_data = {

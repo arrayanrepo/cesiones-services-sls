@@ -45,6 +45,7 @@ def fetch_get_cesiones(session,cookies,tipo_consulta, desde, hasta):
         response = session.post(url, headers=headers, data=payload, cookies=cookies)
         logger.info("Cesiones obtenidas")
         session.close()
+        session.get('https://zeusr.sii.cl/cgi_AUT2000/autTermino.cgi')
         return response.text
     except Exception as err:
         logger.info("No fue posible obtener las cesiones")

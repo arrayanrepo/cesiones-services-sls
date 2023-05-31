@@ -41,8 +41,7 @@ def save_to_s3(file,filename):
     try:
         s3 = boto3.client('s3')
         # Sube el archivo al bucket de S3
-        result = s3.upload_file(file, BUCKET_NAME, f'{SUBDIR}/{now}/{filename}')
-        print(f' UPLOADING FILE => {result}')
+        s3.upload_file(file, BUCKET_NAME, f'{SUBDIR}/{now}/{filename}')
         # Genera la URL del archivo cargado
         url_file = f"https://{BUCKET_NAME}.s3.amazonaws.com/{SUBDIR}/{now}/{filename}"
         return url_file
