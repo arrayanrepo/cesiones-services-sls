@@ -1,9 +1,9 @@
 ## python
 from xml.dom import minidom
 import base64
-import os
 import tempfile
 from typing import Dict
+import logging
 
 ## utils
 from src.utils import utils
@@ -11,6 +11,10 @@ from src.utils import utils
 
 ## barcode
 from pdf417 import encode, render_svg
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def transform_base64(filepath):
     encode_file = None
@@ -178,13 +182,17 @@ def parser_dte(content):
     return data
 
 def generate_pdf417_barcode(string_timbre):
-    codes = encode(string_timbre,columns=11)
-    svg = render_svg(codes)
     
-    tmpfile = tempfile.NamedTemporaryFile(suffix='.svg')
-    
-    svg.write(tmpfile.name)
-    
-    return transform_base64(tmpfile.name)
-    
-    
+    try:
+        codes = encode(string_timbre,columns=11)
+        svg = render_svg(codes)
+        
+        tmpfile = tempfile.NamedTemporaryFile(suffix='.svg')
+        
+        svg.write(tmpfile.name)
+        
+        return transform_base64(tmpfile.name)
+        
+    except Exception as err:
+        logger.error(f"Error creating PDF417 : {err}")
+        return None
