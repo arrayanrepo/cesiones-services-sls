@@ -1,10 +1,37 @@
 service: cesiones-services
+useDotenv: true
 
 frameworkVersion: '3'
 
 provider:
   name: aws
   runtime: python3.8
+
+custom:
+
+  stages:
+    dev:
+      
+      ENV: 'dev'
+      REGION : 'us-east-2'
+      SECRET_NAME_DB: 'dev/mysql'
+      BUCKET_S3: 'arrayanfilesqa'
+      SECRET_NAME_SII: 'sii/simpli'
+      SECRET_DB_ARN: 'arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1'
+      SECRET_SII_ARN:  'arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84'
+      DIAS_CERTF: 10
+    
+    prod:
+
+      ENV: 'prod'
+      REGION : 'us-east-2'
+      SECRET_NAME_DB: 'prodLemuRDS'
+      BUCKET_S3: 'arrayanfilesprod'
+      SECRET_NAME_SII: 'sii/simpli'
+      SECRET_DB_ARN: 'arn:aws:secretsmanager:us-east-2:746907585706:secret:prodLemuRDS-7PU8km'
+      SECRET_SII_ARN:  'arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84'
+      DIAS_CERTF: 10
+
 
 resources:
   
@@ -13,21 +40,21 @@ resources:
     GetCesionesTopic:
       Type: AWS::SNS::Topic
       Properties:
-        DisplayName: GetCesionesTopic
-        TopicName: GetCesionesTopic    
+        DisplayName: GetCesionesTopic-${self:custom.stages.${opt:stage}.ENV}
+        TopicName: GetCesionesTopic-${self:custom.stages.${opt:stage}.ENV}    
 
     DbInsertTopic:
       Type: AWS::SNS::Topic
       Properties:
-        DisplayName: DbInsertTopic
-        TopicName: DbInsertTopic
+        DisplayName: DbInsertTopic-${self:custom.stages.${opt:stage}.ENV}
+        TopicName: DbInsertTopic-${self:custom.stages.${opt:stage}.ENV}
 
     ## role que tiene acceso a los secretos de la base de datos y de la clave de simpli del sii
     ## podra evaluar si es necesario publicar el mensaje en los demas 
     GetCesionesRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: GetCesionesRole
+        RoleName: GetCesionesRole-${self:custom.stages.${opt:stage}.ENV}
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -39,7 +66,7 @@ resources:
         ManagedPolicyArns:
           - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         Policies:
-          - PolicyName: cesionServicePolicyDocument
+          - PolicyName: cesionServicePolicyDocument-${self:custom.stages.${opt:stage}.ENV}
             PolicyDocument: 
               Version: '2012-10-17'
               Statement:
@@ -48,13 +75,13 @@ resources:
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
-                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84"
+                  Resource: ${self:custom.stages.${opt:stage}.SECRET_SII_ARN}
                 
                 ## database secrets
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
-                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
+                  Resource: ${self:custom.stages.${opt:stage}.SECRET_DB_ARN}
                 
                 ## permitir publicar en el topic
                 - Effect: Allow
@@ -66,7 +93,7 @@ resources:
     ConsumerProcessCesionRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: ConsumerProcessCesionRole
+        RoleName: ConsumerProcessCesionRole-${self:custom.stages.${opt:stage}.ENV}
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -78,7 +105,7 @@ resources:
         ManagedPolicyArns:
           - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         Policies:
-          - PolicyName: ConsumerProcessCesionRolePolicyDocument
+          - PolicyName: ConsumerProcessCesionRolePolicyDocument-${self:custom.stages.${opt:stage}.ENV}
             PolicyDocument: 
               Version: '2012-10-17'
               Statement:
@@ -87,13 +114,13 @@ resources:
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
-                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
+                  Resource: ${self:custom.stages.${opt:stage}.SECRET_DB_ARN}
                 
                 ## permitir obtener los secretos de simpli sii
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
-                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84"
+                  Resource: ${self:custom.stages.${opt:stage}.SECRET_SII_ARN}
                 
                 ## subscribirse al SNS topic donde seran publicados los eventos
                 ## que luego de ser procesados para guardase(HistorialCesion,AEC,Certificado,PDF Factura)
@@ -114,15 +141,15 @@ resources:
                 - Effect: Allow
                   Action: "s3:PutObject"
                   Resource: [
-                    "arn:aws:s3:::arrayanfilesqa/aec_files/*",
-                    "arn:aws:s3:::arrayanfilesqa/certificados_cesion/*",
-                    "arn:aws:s3:::arrayanfilesqa/facturas_pdf/*",
+                    "arn:aws:s3:::${self:custom.stages.${opt:stage}.BUCKET_S3}/aec_files/*",
+                    "arn:aws:s3:::${self:custom.stages.${opt:stage}.BUCKET_S3}/certificados_cesion/*",
+                    "arn:aws:s3:::${self:custom.stages.${opt:stage}.BUCKET_S3}/facturas_pdf/*",
                   ]
       
     DBAccessRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: DBAccessRole
+        RoleName: DBAccessRole-${self:custom.stages.${opt:stage}.ENV}
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -134,7 +161,7 @@ resources:
         ManagedPolicyArns:
           - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         Policies:
-          - PolicyName: DBAccessRolePolicyDocument
+          - PolicyName: DBAccessRolePolicyDocument-${self:custom.stages.${opt:stage}.ENV}
             PolicyDocument: 
               Version: '2012-10-17'
               Statement:
@@ -143,7 +170,7 @@ resources:
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
-                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
+                  Resource: ${self:custom.stages.${opt:stage}.SECRET_DB_ARN}
 
                 ## permitir publicar eventos en el topico que manejara la insercion de los registros
                 ## en base a un parametro
@@ -161,9 +188,9 @@ functions:
   getCesionesSimpli:
     handler: handler.get_cesiones_simpli
     environment:
-        REGION_SECRET : 'us-east-2'
-        SECRET_NAME_SII : 'sii/simpli'
-        SECRET_NAME_DB : 'dev/mysql'
+        REGION_SECRET : ${self:custom.stages.${opt:stage}.REGION}
+        SECRET_NAME_SII : ${self:custom.stages.${opt:stage}.SECRET_NAME_SII}
+        SECRET_NAME_DB : ${self:custom.stages.${opt:stage}.SECRET_NAME_DB}
         SNS_TOPIC_ARN : !Ref GetCesionesTopic
     role: { "Fn::GetAtt": ["GetCesionesRole", "Arn"] }
     timeout: 30
@@ -172,7 +199,7 @@ functions:
           rate: cron(*/5 5-22 ? * MON-FRI *)
           enabled: false
           input:
-            dias: 4
+            dias: 1
             tipo_consulta: 2
   
   ## procesa el evento de GetCesionesTopic para guardar en historial cesiones
@@ -180,8 +207,8 @@ functions:
   saveCesionInDb:
       handler: handler.insert_hc_db
       environment:
-        REGION_SECRET : 'us-east-2'
-        SECRET_NAME_DB : 'dev/mysql'
+        REGION_SECRET : ${self:custom.stages.${opt:stage}.REGION}
+        SECRET_NAME_DB : ${self:custom.stages.${opt:stage}.SECRET_NAME_DB}
         SNS_TOPIC_ARN :  !Ref GetCesionesTopic
       role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
       dependsOn:
@@ -199,9 +226,9 @@ functions:
       handler: handler.get_aec_file
       environment:
         SUBDIR: 'aec_files'
-        REGION_SECRET : 'us-east-2'
-        BUCKET_NAME : 'arrayanfilesqa'
-        SECRET_NAME_SII : 'sii/simpli'
+        REGION_SECRET : ${self:custom.stages.${opt:stage}.REGION}
+        BUCKET_NAME : ${self:custom.stages.${opt:stage}.BUCKET_S3}
+        SECRET_NAME_SII : ${self:custom.stages.${opt:stage}.SECRET_NAME_SII}
         SNS_TOPIC_ARN :  !Ref DbInsertTopic
       role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
       dependsOn:
@@ -219,11 +246,11 @@ functions:
       handler: handler.get_certificado_cesion
       environment:
         SUBDIR: 'certificados_cesion'
-        BUCKET_NAME : 'arrayanfilesqa'
-        REGION_SECRET : 'us-east-2'
-        SECRET_NAME_SII : 'sii/simpli'
+        BUCKET_NAME : ${self:custom.stages.${opt:stage}.BUCKET_S3}
+        REGION_SECRET : ${self:custom.stages.${opt:stage}.REGION}
+        SECRET_NAME_SII : ${self:custom.stages.${opt:stage}.SECRET_NAME_SII}
         SNS_TOPIC_ARN :  !Ref DbInsertTopic
-        DAYS : 10
+        DAYS : ${self:custom.stages.${opt:stage}.DIAS_CERTF}
       role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
       dependsOn:
         - "GetCesionesTopic"
@@ -243,8 +270,8 @@ functions:
   generatePDFCesion:
       handler: handler.generatePDFCesion
       environment:
-        REGION_SECRET : 'us-east-2'
-        BUCKET_NAME : 'arrayanfilesqa'
+        REGION_SECRET : ${self:custom.stages.${opt:stage}.REGION}
+        BUCKET_NAME : ${self:custom.stages.${opt:stage}.BUCKET_S3}
         SUBDIR: 'facturas_pdf'
         SNS_TOPIC_ARN :  !Ref DbInsertTopic
       role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
@@ -265,9 +292,9 @@ functions:
   insert_record_db:
       handler: handler.insert_record_db
       environment:
-        REGION_SECRET : 'us-east-2'
-        SECRET_NAME_DB : 'dev/mysql'
-        BUCKET_NAME : 'arrayanfilesqa'
+        REGION_SECRET : ${self:custom.stages.${opt:stage}.REGION}
+        SECRET_NAME_DB : ${self:custom.stages.${opt:stage}.SECRET_NAME_DB}
+        BUCKET_NAME : ${self:custom.stages.${opt:stage}.BUCKET_S3}
         SUBDIR: 'facturas_pdf'
       role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
       dependsOn:
@@ -292,3 +319,4 @@ outputs:
 
 plugins:
   - serverless-python-requirements
+
