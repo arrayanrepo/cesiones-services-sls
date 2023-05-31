@@ -10,12 +10,15 @@ resources:
   
   Resources:
 
+    ## topic principal donde se envian los eventos de las cesiones obtenidas
     GetCesionesTopic:
       Type: AWS::SNS::Topic
       Properties:
         DisplayName: GetCesionesTopic
         TopicName: GetCesionesTopic    
 
+
+    ## topico que recibe los eventos y maneja el router para el guardado
     DbInsertTopic:
       Type: AWS::SNS::Topic
       Properties:
@@ -54,7 +57,7 @@ resources:
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
-                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
+                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:prodLemuRDS-7PU8km"
                 
                 ## permitir publicar en el topic
                 - Effect: Allow
@@ -87,7 +90,7 @@ resources:
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
-                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
+                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:prodLemuRDS-7PU8km"
                 
                 ## permitir obtener los secretos de simpli sii
                 - Effect: Allow
@@ -143,7 +146,7 @@ resources:
                 - Effect: Allow
                   Action:
                     - 'secretsmanager:GetSecretValue'
-                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:dev/mysql-4oEUh1"
+                  Resource: "arn:aws:secretsmanager:us-east-2:746907585706:secret:prodLemuRDS-7PU8km"
 
                 ## permitir publicar eventos en el topico que manejara la insercion de los registros
                 ## en base a un parametro
@@ -172,7 +175,7 @@ functions:
           rate: cron(*/5 5-22 ? * MON-FRI *)
           enabled: false
           input:
-            dias: 4
+            dias: 5
             tipo_consulta: 2
   
   ## procesa el evento de GetCesionesTopic para guardar en historial cesiones
