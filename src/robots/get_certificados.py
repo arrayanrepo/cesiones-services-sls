@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 def run(rut,password, days, cesion):
     try:
         desde, hasta =  utils.get_dates(days=days,format_string='%d%m%Y')
-        session, _ = sii_session.login(rut=rut,password=password)  
+        session, _ = sii_session.login(rut=rut,password=password)
         
         table = certificado.consulta_individual(rut=rut,session=session, desde=desde, hasta=hasta, docto_certf=cesion)
         idx_check = parser_html.get_checked_certf_id(table=table, folio=cesion['folio'])
@@ -43,7 +43,7 @@ def run(rut,password, days, cesion):
             "fecha": certf_data["fecha"],
             "fecha_sola": "fechasola",
             "folio_superior": certf_data['folio_superior'],
-            "fecha_certificado":  now.strftime("%d/%m/%Y %H:%M:%S")
+            "fecha_certificado":  now.strftime("%d-%m-%Y %H:%M:%S")
         }
 
         filename = f'Certf_{certf_data["rut_cliente"]}_{certf_data["rut_deudor"]}_{certf_data["folio"]}.pdf'

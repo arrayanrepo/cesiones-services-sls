@@ -83,7 +83,7 @@ def clean_response(data,folio,rut_deudor,rut_cliente,desde):
     parrafo = None
     rows = None
     try:
-        parrafo = parrafoRaw[0].get_text()
+        parrafo = parrafoRaw[0]
         table = soup.find_all('table')
         rows = table[2].find_all('tr')
 
