@@ -139,7 +139,8 @@ def parser_dte(content):
         }
         detalles.append(detalle_data)
     
-    path = generate_pdf417_barcode(string_timbre=doc.getElementsByTagName('TED')[0].toxml())
+    data_timbre = doc.getElementsByTagName('TED')[0].toprettyxml().replace("ns0:", "").replace(' xmlns:ns0="http://www.sii.cl/SiiDte"', "").replace("  ", "").replace("\n","").replace("\t","")
+    path = generate_pdf417_barcode(string_timbre=data_timbre)
     
     data = {
         'factura': {

@@ -168,3 +168,25 @@ def insert_record_db(event,context):
     result = query_manager.select_query(data=event_data, event_type=event_type)
 
     return {"statusCode": 200, 'result': result}
+
+
+if __name__ == '__main__':
+    
+    context = {}
+    event = {
+        'Records': [
+            {
+                'Sns': {
+                    'Message': json.dumps({
+                        'rut_cliente': '77561199-5',
+                        'rut_deudor': '76073164-1',
+                        'folio': 388,
+                        'url_file':'https://arrayanfilesqa.s3.amazonaws.com/aec_files/31_05_2023/AEC_77561199_5_388_76073164_1.xml',
+                        'event_type': 1,
+                    })
+                },
+            }
+        ]
+    }
+    
+    generatePDFCesion(context=context, event=event)
