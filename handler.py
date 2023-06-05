@@ -145,7 +145,7 @@ def generatePDFCesion(event, context):
     return {"statusCode": 200, 'url': url}
 
 
-def insert_record_db(event, context):
+def insertRecordDb(event, context):
     """Funcion que maneja el proceso de insertado en la base de datos de 
 
         AEC
@@ -167,32 +167,3 @@ def insert_record_db(event, context):
     result = query_manager.select_query(data=event_data, event_type=event_type)
 
     return {"statusCode": 200, 'result': result}
-
-
-
-if __name__ == '__main__':
-    
-    context = {}
-    
-    # event = {
-    #     'Records': [
-    #         {
-    #             'Sns': {
-    #                 'Message': json.dumps({
-    #                     'rut_cliente': '77475072-k',
-    #                     'rut_deudor': '76337371-1',
-    #                     'folio':'390',
-    #                     'url_file': 'https://arrayanfilesqa.s3.amazonaws.com/aec_files/01_06_2023/AEC_77475072_K_390_76337371_1.xml',
-    #                     'event_type': 1
-    #                 })
-    #             }
-    #         }
-    #     ]
-    # }
-   
-    event = {
-        'dias': 10,
-        'tipo_consulta': 2
-    }
-    
-    get_cesiones_simpli(context=context, event=event)

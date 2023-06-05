@@ -195,12 +195,15 @@ functions:
         SECRET_NAME_SII : ${self:custom.stages.${opt:stage}.SECRET_NAME_SII}
         SECRET_NAME_DB : ${self:custom.stages.${opt:stage}.SECRET_NAME_DB}
         SNS_TOPIC_ARN : !Ref GetCesionesTopic
-    role: { "Fn::GetAtt": ["GetCesionesRole", "Arn"] }
+    role : 
+      Fn::Sub:
+        - arn:aws:iam::${aws:accountId}:role/${RoleName}
+        - RoleName: GetCesionesRole-${self:custom.stages.${opt:stage}.ENV}
     timeout: 30
     events:
       - schedule: 
           rate: cron(*/5 5-22 ? * MON-FRI *)
-          enabled: true
+          enabled: false
           input:
             dias: 1
             tipo_consulta: 2
@@ -213,7 +216,10 @@ functions:
         REGION_SECRET : ${self:custom.stages.${opt:stage}.REGION}
         SECRET_NAME_DB : ${self:custom.stages.${opt:stage}.SECRET_NAME_DB}
         SNS_TOPIC_ARN :  !Ref GetCesionesTopic
-      role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
+      role : 
+        Fn::Sub:
+          - arn:aws:iam::${aws:accountId}:role/${RoleName}
+          - RoleName: ConsumerProcessCesionRole-${self:custom.stages.${opt:stage}.ENV}
       dependsOn:
         - "GetCesionesTopic"
         - "DbInsertTopic"
@@ -233,7 +239,10 @@ functions:
         BUCKET_NAME : ${self:custom.stages.${opt:stage}.BUCKET_S3}
         SECRET_NAME_SII : ${self:custom.stages.${opt:stage}.SECRET_NAME_SII}
         SNS_TOPIC_ARN :  !Ref DbInsertTopic
-      role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
+      role : 
+        Fn::Sub:
+          - arn:aws:iam::${aws:accountId}:role/${RoleName}
+          - RoleName: ConsumerProcessCesionRole-${self:custom.stages.${opt:stage}.ENV}
       dependsOn:
         - "GetCesionesTopic"
         - "DbInsertTopic"
@@ -254,7 +263,10 @@ functions:
         SECRET_NAME_SII : ${self:custom.stages.${opt:stage}.SECRET_NAME_SII}
         SNS_TOPIC_ARN :  !Ref DbInsertTopic
         DAYS : ${self:custom.stages.${opt:stage}.DIAS_CERTF}
-      role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
+      role : 
+        Fn::Sub:
+          - arn:aws:iam::${aws:accountId}:role/${RoleName}
+          - RoleName: ConsumerProcessCesionRole-${self:custom.stages.${opt:stage}.ENV}
       dependsOn:
         - "GetCesionesTopic"
         - "DbInsertTopic"
@@ -277,7 +289,10 @@ functions:
         BUCKET_NAME : ${self:custom.stages.${opt:stage}.BUCKET_S3}
         SUBDIR: 'facturas_pdf'
         SNS_TOPIC_ARN :  !Ref DbInsertTopic
-      role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
+      role : 
+        Fn::Sub:
+          - arn:aws:iam::${aws:accountId}:role/${RoleName}
+          - RoleName: ConsumerProcessCesionRole-${self:custom.stages.${opt:stage}.ENV}
       dependsOn:
         - "GetCesionesTopic"
         - "DbInsertTopic"
@@ -292,14 +307,17 @@ functions:
 
   ## funcion para generar el manejo de los eventos en la base de datos
   ## debe tener acceso a la base de datos (secreto)
-  insert_record_db:
-      handler: handler.insert_record_db
+  insertRecordDb:
+      handler: handler.insertRecordDb
       environment:
         REGION_SECRET : ${self:custom.stages.${opt:stage}.REGION}
         SECRET_NAME_DB : ${self:custom.stages.${opt:stage}.SECRET_NAME_DB}
         BUCKET_NAME : ${self:custom.stages.${opt:stage}.BUCKET_S3}
         SUBDIR: 'facturas_pdf'
-      role: { "Fn::GetAtt": ["ConsumerProcessCesionRole", "Arn"] }
+      role : 
+        Fn::Sub:
+          - arn:aws:iam::${aws:accountId}:role/${RoleName}
+          - RoleName: ConsumerProcessCesionRole-${self:custom.stages.${opt:stage}.ENV}
       dependsOn:
         - "DbInsertTopic"
       events:
@@ -323,3 +341,6 @@ outputs:
 plugins:
   - serverless-python-requirements
 
+package:
+  patterns:
+    - "!env/**"

@@ -1,6 +1,7 @@
 # python
 import logging
 import json
+import xml.etree.ElementTree as ET
 
 ## session
 from src.fetch import session as sii_session
@@ -46,63 +47,55 @@ def fetch_get_cesiones(session,cookies,tipo_consulta, desde, hasta):
         logger.info("Cesiones obtenidas")
         session.close()
         session.get('https://zeusr.sii.cl/cgi_AUT2000/autTermino.cgi')
-        import pdb;pdb.set_trace()
-        return response.text
+        return response.content
     except Exception as err:
         logger.info("No fue posible obtener las cesiones")
         raise SystemError(f"No fue posible obtener las cesiones {err}")
 
 
 def clean_cesiones(data):
-    
+    decode_data = data.decode("utf-8")
+    root = ET.fromstring(decode_data)
+    sesiones = root.findall(".//CESION")
     cesiones = []
-    
-    logger.info('clean data')
-    logger.info(f'TOTAL CESIONES => {len(data.splitlines())}')
-    for line in data.splitlines():
-        info = line.split(';')
-        if len(info) == 18:
-            
-            if info[0] != 'VENDEDOR':
-                obj = {
-                    'rut_cliente': info[0],
-                    'estado_cesion': info[1],
-                    'rut_deudor': info[2],
-                    'mail_deudor': info[3],
-                    'tipo_documento': info[4],
-                    'nombre_doc': info[5],
-                    'folio': info[6],
-                    'fch_emis_dte': info[7],
-                    'mnt_total': info[8],
-                    'cedente': info[9],
-                    'rz_cedente': info[10],
-                    'mail_cedente': info[11],
-                    'cesionario': info[12],
-                    'rz_cesionario': info[13],
-                    'mail_cesionario': info[14],
-                    'fch_cesion': info[15],
-                    'mnt_cesion': info[16],
-                    'fch_vencimiento': info[17]
-                }
-                
-                ## validacion de que ya exista la cesion
-                results = querys.validate_records(rut_cliente=obj['rut_cliente'],rut_deudor=obj['rut_deudor'],folio=obj['folio'])
-                
-                if len(results) > 0:
-                    if all(results[0].values()):
-                        return cesiones
-                    else:
-                        snsTopic.publish_event(message=json.dumps(obj))
-                        print(f'Message => {obj}')
-                        cesiones.append(obj)
-                else:
-                    snsTopic.publish_event(message=json.dumps(obj))
-                    cesiones.append(obj)
-                
-            else:    
-                continue
-    return cesiones
 
+    for sesion in sesiones:
+        
+        obj = {
+            "rut_cliente": sesion.find("VENDEDOR").text,
+            "estado_cesion": sesion.find("ESTADO_CESION").text,
+            "rut_deudor": sesion.find("DEUDOR").text,
+            "mail_deudor": sesion.find("MAIL_DEUDOR").text,
+            "tipo_documento": sesion.find("TIPO_DOC").text,
+            "nombre_doc": sesion.find("NOMBRE_DOC").text,
+            "folio": sesion.find("FOLIO_DOC").text,
+            "fch_emis_dte": sesion.find("FCH_EMIS_DTE").text,
+            "mnt_total": sesion.find("MNT_TOTAL").text,
+            "cedente": sesion.find("CEDENTE").text,
+            "rz_cedente": sesion.find("RZ_CEDENTE").text,
+            "mail_cedente": sesion.find("MAIL_CEDENTE").text,
+            "cesionario": sesion.find("CESIONARIO").text,
+            "rz_cesionario": sesion.find("RZ_CESIONARIO").text,
+            "mail_cesionario": sesion.find("MAIL_CESIONARIO").text,
+            "fch_cesion": sesion.find("FCH_CESION").text,
+            "mnt_cesion": sesion.find("MNT_CESION").text,
+            "fch_vencimiento": sesion.find("FCH_VENCIMIENTO").text,
+        }
+        
+        
+        results = querys.validate_records(rut_cliente=obj['rut_cliente'],rut_deudor=obj['rut_deudor'],folio=obj['folio'])
+        
+        if len(results) > 0:
+            if all(results[0].values()):
+                return cesiones
+            else:
+                snsTopic.publish_event(message=json.dumps(obj))
+                print(f'Message => {obj}')
+                cesiones.append(obj)
+        else:
+            snsTopic.publish_event(message=json.dumps(obj))
+            cesiones.append(obj)
+    
 def run(rut ,password ,days , tipo_consulta):
     
     desde, hasta = utils.get_dates(days=days, format_string='%d%m%Y')
