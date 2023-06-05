@@ -36,7 +36,7 @@ def fetch_get_cesiones(session,cookies,tipo_consulta, desde, hasta):
     }
     payload = {
         'TIPOCONSULTA': tipo_consulta,
-        'TXTXML': 'TXT',
+        'TXTXML': 'XML',
         'DESDE': desde,
         'HASTA': hasta,
     }
@@ -46,6 +46,7 @@ def fetch_get_cesiones(session,cookies,tipo_consulta, desde, hasta):
         logger.info("Cesiones obtenidas")
         session.close()
         session.get('https://zeusr.sii.cl/cgi_AUT2000/autTermino.cgi')
+        import pdb;pdb.set_trace()
         return response.text
     except Exception as err:
         logger.info("No fue posible obtener las cesiones")
