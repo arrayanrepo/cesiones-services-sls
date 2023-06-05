@@ -4,23 +4,41 @@ import datetime as dt
 ## database con
 from src.database.database import DatabaseSession
 
+## utils
+from src.utils import utils
 
-# def format_datetime(date_string: str) -> dt.datetime:
-#     datetime_format = "%d:%m:%Y %H:%M"
-#     date_format = "%d:%m:%Y"
 
-#     try:
-#         fecha_con_hora = dt.datetime.strptime(date_string, datetime_format)
-#         return fecha_con_hora
-#     except ValueError:
-#         try:
-#             fecha_sin_hora = dt.datetime.strptime(date_string, date_format)
-#             return fecha_sin_hora
-#         except ValueError:
-#             print("El formato de fecha proporcionado no es válido.")
-#             return None
+def validate_records(folio,rut_deudor,rut_cliente):
+    """Query para validar que no exista la cesion ya en base de datos, esto permitira llamar solo lo necesario cuando se haga el scrapper
+
+    Args:
+        folio (string): folio documento
+        rut_deudor (string): rut deudor (deudor)
+        rut_cliente (rut_cliente): rut cliente (cliente)
+    """
     
+    DatabaseSession()
     
+    sql = """
+        SELECT 
+        ah.id hist_id,
+        aa.id aec_id, 
+        ac.id certf_id,
+        df.pdf_file 
+        from
+        api_historialcesiones ah 
+        left join api_aeccesion aa on(aa.historialcesion_id = ah.id)
+        left join api_cesionesarrayan ac on(ac.rut_deudor = ah.deudor and ac.company_id = ah.company_id and ac.folio = ah.folio_doc)
+        left join api_documentofactura df on(df.folio = ah.folio_doc and df.deudor_id = ac.deudor_id and df.company_id = ac.company_id)
+        where 
+        ah.vendedor  =  :rut_cliente 
+        and ah.deudor  =  :rut_deudor 
+        and ah.folio_doc = :folio
+        and ah.cesionario  = '76865845-5'
+        order by ah.date_created desc;
+    """
+    result = DatabaseSession.execute_query(query=sql, params={'rut_cliente':rut_cliente, 'rut_deudor':rut_deudor, 'folio': folio})    
+    return result
 
 def get_company_id(rut_cliente):
     
@@ -35,7 +53,7 @@ def insert_company(rut, business_name):
     DatabaseSession()
     
     sql = 'INSERT INTO `api_company` (business_name, rut,date_created) VALUES(:business_name,:rut, :date_created);';
-    DatabaseSession.insert_row(sql,params={'rut': rut,'business_name': business_name,'date_created': dt.datetime.now()})
+    DatabaseSession.insert_row(sql,params={'rut': rut,'business_name': business_name,'date_created': utils.get_today()})
     
 def get_historial_cesiones(rut_deudor, folio, company_id):
     
@@ -173,12 +191,15 @@ def get_certf_cesion(rut_cliente: str, rut_deudor: str , folio : str):
     result = DatabaseSession.execute_query(query=sql,params=params)
     return result
 
-def insert_db_aec(file,historialcesion_id, date_created):
+def insert_db_aec(file,historialcesion_id, date_created,company_id,deudor_id,folio):
     
     DatabaseSession()
     
-    sql = 'INSERT INTO api_aeccesion (date_created, file, historialcesion_id) VALUES(:date_created, :file, :historialcesion_id)'
+    sql = 'INSERT INTO api_aeccesion (date_created, file, historialcesion_id,company_id,deudor_id,folio) VALUES(:date_created, :file, :historialcesion_id,:company_id,:deudor_id,:folio)'
     params = {
+        'folio': folio,
+        'deudor_id': deudor_id,
+        'company_id': company_id,
         'file': file,
         'historialcesion_id': historialcesion_id,
         'date_created': date_created
@@ -216,7 +237,7 @@ def insert_certf_cesion(rut_deudor,rut_cliente,company_id,deudor_id,nombre_archi
         'folio': folio,
         'company_id': company_id,
         'deudor_id' : deudor_id,
-        'date_created': dt.datetime.now(),
+        'date_created': utils.get_today(),
     }
     
     DatabaseSession.insert_row(sql,params=params)
@@ -226,8 +247,13 @@ def insert_aec_file(data):
     
     try:
 
+        ## get company_id
         results = get_company_id(rut_cliente=data['rut_cliente'])
         company_id = results[0]['id']
+        
+        ## get deudor_id
+        results = get_company_id(rut_cliente=data['rut_deudor'])
+        deudor_id = results[0]['id']
         
         ## get db 
         historial_db = get_historial_cesiones(rut_deudor=data['rut_deudor'],folio=data['folio'],company_id=company_id)
@@ -240,7 +266,7 @@ def insert_aec_file(data):
         if len(get_aec_register(historial_cesion_id=historial_cesion_id)) > 0:
             return False
         
-        insert_db_aec(file=data['url_file'],historialcesion_id=historial_cesion_id,date_created=dt.datetime.now())
+        insert_db_aec(file=data['url_file'],historialcesion_id=historial_cesion_id,date_created=utils.get_today(),company_id=company_id,deudor_id=deudor_id,folio=data['folio'])
         
         return True
         
@@ -267,4 +293,33 @@ def insert_certificado_file(data):
     
     except Exception as err:
         print(f'Error processing certificate save {err}')
+        return False
+    
+    
+def insert_pdf_file(data):
+    
+    
+    try:
+        
+        DatabaseSession()
+        
+        sql = """
+            UPDATE api_documentofactura doc
+            JOIN api_company deudor  ON (deudor.id =  doc.deudor_id )
+            JOIN api_company cliente  ON (cliente.id =  doc.company_id)
+            SET doc.pdf_file = :url
+            WHERE deudor.rut = :rut_deudor and cliente.rut = :rut_cliente  and doc.folio = :folio 
+        """
+        
+        params = {
+            'rut_cliente':  data['rut_cliente'],
+            'rut_deudor': data['rut_deudor'],
+            'folio': data['folio'],
+            'url': data['url_file']
+        }
+        
+        DatabaseSession.insert_row(sql,params=params)
+        
+    except Exception as err:
+        print(f'ERROR SAVE PDF FILE => {err}')
         return False

@@ -1,0 +1,9 @@
+{
+    "Records": [
+        {
+            "Sns": {
+                "Message": "{\"rut_cliente\": \"77167104-7\",\"rut_deudor\": \"69130300-4\",\"tipo_documento\": \"33\",\"folio\": \"76\",\"url_file\": \"https://arrayanfilesqa.s3.amazonaws.com/certificados_cesion/05_06_2023/Certf_13151874-9_69180900-5_991.pdf\",\"event_type\": \"2\"}"
+            }
+        }
+    ]
+}

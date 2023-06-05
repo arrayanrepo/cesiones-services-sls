@@ -38,7 +38,6 @@ def download_aec(session, cookies, documento):
     }
 
     try:
-        logger.info(f"get aec del folio {documento['folio']}")
         rut_without_dv, rut_dv, _ = utils.format_rut(documento["rut_cliente"])
         payload = {
             "rut_emisor": rut_without_dv,
@@ -50,14 +49,14 @@ def download_aec(session, cookies, documento):
         }
 
         _result = session.post("https://palena.sii.cl/cgi_rtc/RTC/RTCDescargarXmlCons.cgi",headers=headers,data=payload,cookies=cookies)
+        session.get('https://zeusr.sii.cl/cgi_AUT2000/autTermino.cgi')
+        session.close()
         return save_file(documento=documento,data=_result)
 
-    except Exception as e:
-        logger.error(e)
-        logger.info(f"No fue posible descargar el AEC del folio {documento['folio']}")
-
-        # agregar a la cola nuevamente
-        raise Exception("El documento no pudo ser descargado")
+    except Exception as err:
+        print(f'ERROR: {err}')
+        print(f"No fue posible descargar el AEC del folio {documento['folio']}")
+        raise Exception(err)
 
 
 def save_file(documento,data):
@@ -77,18 +76,21 @@ def save_file(documento,data):
             'rut_deudor': documento['rut_deudor'],
             'folio': documento['folio'],
             'url_file': file_url,
+            'event_type': 1
         }
         snsTopic.publish_event(message=json.dumps(message))
         
         return file_url
-    except Exception as e:
-        logger.error("Ocurrió un error:", str(e))
+    except Exception as err:
+        print(f"Ocurrió un error LINE 89: {err}")
     
 
 def run(rut,password,documento):
     
-    session, cookies = sii_session.login(rut=rut,password=password)    
+    session, cookies = sii_session.login(rut=rut,password=password)
+    logger.info(f'SESSION => {session}')
     
     logger.info('Obtener AEC')
     aec_file_url = download_aec(session=session,cookies=cookies,documento=documento)
+    
     return aec_file_url

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factura</title>
+
+
+    <style type="text/css">
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @page {
+            size: letter;
+            margin: 0;
+            page-break-after: always;
+            break-after: avoid-page;
+
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            height: 100%;
+            /* padding: 1cm 1cm 1cm 1cm; */
+        }
+
+        table {
+            width: 100%;
+        }
+
+
+
+        .red_box {
+            border: 5px solid red;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            float: right;
+            color: red;
+            text-align: center;
+            font-size: 12pt;
+            font-weight: bold;
+            padding: 10px;
+
+        }
+
+        .w-100 {
+            width: 100%;
+        }
+
+        .h-100 {
+            height: 100%;
+        }
+
+        .m-0 {
+            margin: 0;
+        }
+
+        .mt-5 {
+            margin-top: 5px;
+        }
+
+        .mt-10 {
+            margin-top: 10px;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mb-10 {
+            margin-bottom: 10px;
+        }
+
+        .p-10 {
+            padding: 10px;
+        }
+
+        .p-20 {
+            padding: 20pt;
+        }
+
+        .fs-12 {
+            font-size: 12pt;
+        }
+
+        .fs-14 {
+            font-size: 14pt;
+        }
+
+        .fs-16 {
+            font-size: 16pt;
+        }
+
+        .fs-18 {
+            font-size: 18pt;
+        }
+
+        .text_upper {
+            text-transform: uppercase;
+        }
+
+        .fw-bold {
+            font-weight: bold;
+        }
+
+        .fw-light {
+            font-weight: 300;
+        }
+
+        .ft-capitalize {
+            text-transform: capitalize;
+        }
+
+        .t-center {
+            text-align: center;
+        }
+
+        .t-left {
+            text-align: left;
+        }
+
+        .t-right {
+            text-align: right;
+        }
+
+
+        .flex-align-center-space {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+
+        .table-base {
+            border: 1px solid black;
+        }
+
+        .facturas__table {
+            height: 100%;
+        }
+
+
+        .facturas__table tr:last-child {
+            border-bottom: 1px solid black;
+        }
+
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+
+        .content {
+            padding: 1cm;
+            width: 100%;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            padding: 1cm;        
+            width: 100%;    
+        }
+
+        .footer_content--timbre {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .footer_content--text {
+            width: 100%;
+            text-align: center;
+            font-size: 0.3cm;
+        }
+
+        .container-img>.imagen-svg {
+            width: 10cm !important;
+            height: 3.2cm;
+            margin-top: 0.2cm;
+            margin-bottom: 0.2c;
+            vertical-align: middle
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="wrapper">
+
+        <div class="content">
+
+
+
+            <table style="width: 100%">
+                <tr>
+                    <td style="width: 60%;">
+                        <div class="factura__header--emisor" style="height: 165px;">
+                            <div style="padding-left: 0;padding-right: 20px;padding-bottom: 20px;padding-top: 20px;">
+                                <p class="text_upper fw-bold fs-16 mb-10">
+                                    {{emisor.razon_social_emisor}}</p>
+                                <p class="m-0 fs-12 fw-light mt-5 ft-capitalize">{{emisor.giro_emisor}}</p>
+                                <p class="m-0 fs-12 fw-light mt-5 ft-capitalize">{{emisor.dir_emisor}}</p>
+                                <p class="m-0 fs-12 fw-light mt-5 ft-capitalize">{{emisor.cmna_emisor}} -
+                                    {{emisor.ciudad_emisor}}
+                                </p>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td style="width: 40%;">
+                        <div class="factura__header--redbox" style="height: 140px;">
+                            <div class="w-100 h-100 flex-align-center-space red_box fs-14">
+                                <div>
+                                    RUT : {{emisor.rut_emisor}}
+                                </div>
+                                <div>
+                                    {{factura.tipo_dte.number_type_palabras}}
+                                </div>
+                                <div>
+                                    N° {{factura.folio}}
+                                </div>
+                            </div>
+                            <div class="w-100 t-center mt-10">
+                                Fecha Emision : {{factura.fecha_emision}}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+
+            <table style="width:100%" class="mt-20 table-base p-10">
+                <tr class="t-left">
+                    <th>Sr/Sra</th>
+                    <td class="ft-capitalize">: {{receptor.razon_social_receptor}}</td>
+                    <th>Ciudad</th>
+                    <td class="ft-capitalize">: {{receptor.cmna_receptor}}</td>
+                </tr>
+                <tr class="t-left">
+                    <th>Rut</th>
+                    <td class="ft-capitalize">: {{receptor.rut_receptor}}</td>
+                    <th>Comuna</th>
+                    <td class="ft-capitalize">: {{receptor.ciudad_receptor}}</td>
+                </tr>
+                <tr class="t-left">
+                    <th>Giro</th>
+                    <td class="ft-capitalize">: {{receptor.dir_receptor}}</td>
+                </tr>
+            </table>
+
+
+            <table style="border-collapse: collapse;" class="mt-20">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid black; padding: 4px;">Item</th>
+                        <th style="border: 1px solid black; padding: 4px;">Descripción</th>
+                        <th style="border: 1px solid black; padding: 4px;">Cantidad</th>
+                        <th style="border: 1px solid black; padding: 4px;">Precio</th>
+                        <th style="border: 1px solid black; padding: 4px;">Valor</th>
+                    </tr>
+                </thead>
+                <tbody class="facturas__table">
+                    {% for item in detalles %}
+                    <tr>
+                        <td style="border-left: 1px solid black;padding:4px">{{ item.NroLinDet }}</td>
+                        <td style="border-left: 1px solid black;padding:4px">{{ item.NmbItem }}</td>
+                        <td style="border-left: 1px solid black;padding:4px" class="t-right">{{ item.QtyItem }}</td>
+                        <td style="border-left: 1px solid black;padding:4px" class="t-right">{{ item.PrcItem }}</td>
+                        <td style="border-left: 1px solid black;border-right: 1px solid black;padding:4px"
+                            class="t-right">
+                            {{
+                            item.MontoItem }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+
+        <div class="footer">
+            <table style="width: 100%;">
+                <tr >
+                    <td style="width: 60%;">
+                        <div class="footer_content--timbre">
+                            <div class="container-img">
+                                <img class="imagen-svg" src="data:image/svg+xml;base64,{{ encoded_file }}"></img>
+                            </div>
+                            <div class="footer_content--text mt-10 w-100">
+                                <div>Timbre electrónico S.I.I.</div>
+                                <div>Verifique documento en: http://www.sii.cl</div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td style="width: 40%;">
+                        <div class="footer_content--totales">
+                            <table style="width:100%" class="mt-20 table-base p-10">
+                                <tr class="t-left p-10">
+                                    <th class="fw-light">TOTAL NETO</th>
+                                    <td class="ft-capitalize t-right">: {{totales.neto}}</td>
+                                </tr>
+                                <tr class="t-left p-10">
+                                    <th class="fw-light">IVA {{totales.tasa_iva}}</th>
+                                    <td class="ft-capitalize t-right">: {{totales.iva}}</td>
+                                </tr>
+                                <tr class="t-left p-10">
+                                    <th>TOTAL</th>
+                                    <td class="ft-capitalize t-right">: <span class="fw-bold">{{totales.total}}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

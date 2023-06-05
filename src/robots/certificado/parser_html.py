@@ -1,7 +1,5 @@
 ## python
 import logging
-import datetime as dt
-
 
 ## utils
 from src.utils import utils
@@ -85,7 +83,7 @@ def clean_response(data,folio,rut_deudor,rut_cliente,desde):
     parrafo = None
     rows = None
     try:
-        parrafo = parrafoRaw[0].get_text()
+        parrafo = parrafoRaw[0]
         table = soup.find_all('table')
         rows = table[2].find_all('tr')
 
@@ -127,7 +125,7 @@ def clean_response(data,folio,rut_deudor,rut_cliente,desde):
     if len(last_list) > 0:
         FORMAT = "%d%m%Y%H%M%S"
         certificado_data = {
-            "archivo": f"CMM_{rut_cliente}_{rut_deudor}_{folio}_{dt.datetime.now().strftime(FORMAT)}.pdf",
+            "archivo": f"CMM_{rut_cliente}_{rut_deudor}_{folio}_{utils.get_today().strftime(FORMAT)}.pdf",
             'array_final': last_list,
             "folio": folio,
             "fecha": desde,

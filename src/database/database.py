@@ -15,32 +15,28 @@ logger = logging.getLogger(__name__)
 
 
 def retrieve_url_conn():
-    global url_con
-
-    secret_name = os.environ.get('SECRET_NAME')
+    secret_name = os.environ.get('SECRET_NAME_DB')
     secret_region = os.environ.get('REGION_SECRET')
-    
+        
     secrets = get_secrets(secret=secret_name,region=secret_region)
     password = secrets['password']
     username = secrets['username']
     host = secrets['host']
     database = secrets['database']
     
-    url_con = f'mysql+pymysql://{username}:{password}@{host}/{database}'
+    return  f'mysql+pymysql://{username}:{password}@{host}/{database}'
 
 class DatabaseSession:
     
     __instance = None
-    
+        
     def __new__(cls):
         
         if cls.__instance is None:
-            print('No existe la instancia')
+            url_con = retrieve_url_conn()
             engine = create_engine(url=url_con)
             Session = scoped_session(sessionmaker(bind=engine))
             cls.__instance = Session()
-        
-        print('isando la misma instancia')
         return cls.__instance
 
     @classmethod
@@ -56,7 +52,7 @@ class DatabaseSession:
                 results.append(row._asdict())
             return results 
         except Exception as err:
-            print(f'Error executing query: %s' % err)
+            print(f'Error executing query: {err}')
             
     
     @classmethod
@@ -69,5 +65,5 @@ class DatabaseSession:
                 conn.execute(statement, params)
                 conn.commit()
             except Exception as err:
-                print("Error inserting row: %s" % err)
+                print(f"Error inserting row: {err}")
                 conn.rollback()

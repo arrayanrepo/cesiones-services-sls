@@ -1,66 +1,38 @@
-# Serverless Framework AWS Python Cesiones Services
+# Servicio de Scrapeo de Cesionarios con Serverless Framework
 
-## Usage
+Este repositorio contiene el código fuente y la configuración necesaria para desplegar un servicio de scrapeo de cesiones obtenidas por una empresa, utilizando el framework Serverless y las funciones Lambda de AWS.
 
-### Deployment
+## Descripción del proyecto
 
-In order to deploy the example, you need to run the following command:
+El objetivo de este proyecto es desarrollar un servicio de scrapeo que obtenga cesiones de Simpli y posteriormente las procese mediante funciones Lambda de AWS. El framework Serverless nos permite simplificar el proceso de despliegue y gestión de nuestras funciones Lambda, así como facilitar la configuración de los diferentes stages (entornos) del proyecto.
 
-```
-$ serverless deploy
-```
+## Estructura del repositorio
 
-After running deploy, you should see output similar to:
+El repositorio está estructurado de la siguiente manera:
 
-```bash
-Deploying aws-python-project to stage dev (us-east-1)
+- **`src/`**: Contiene el código fuente de las funciones Lambda.
+- **`serverless.yml`**: Archivo de configuración de Serverless Framework.
+- **`inputs/`**: Carpeta con archivos JSON que contienen los datos de prueba para las funciones.
 
-✔ Service deployed to stack aws-python-project-dev (112s)
+## Configuración de Serverless Framework
 
-functions:
-  hello: aws-python-project-dev-hello (1.5 kB)
-```
+El archivo `serverless.yml` contiene la configuración de nuestro servicio y las funciones Lambda asociadas. Además, se declaran dos grupos de variables de entorno para mantener los stages de desarrollo (`dev`) y producción (`prod`). Estos stages acceden a secretos distintos, lo que permite tener diferentes configuraciones dependiendo del entorno.
 
-### Invocation
+## Pruebas de las funciones
 
-After successful deployment, you can invoke the deployed function by using the following command:
+Para probar las funciones Lambda, se proporcionan archivos JSON en la carpeta `inputs/`. Estos archivos contienen el mostrario de inputs necesarios para cada función. Puedes utilizar estos archivos como ejemplos de entrada para verificar el correcto funcionamiento de las funciones en diferentes escenarios.
 
-```bash
-serverless invoke --function hello
-```
+## Despliegue del servicio
 
-Which should result in response similar to the following:
+Para desplegar el servicio en AWS utilizando Serverless Framework, sigue los siguientes pasos:
 
-```json
-{
-    "statusCode": 200,
-    "body": "{\"message\": \"Go Serverless v3.0! Your function executed successfully!\", \"input\": {}}"
-}
-```
+1. Asegúrate de tener una cuenta de AWS y las credenciales adecuadas configuradas en tu entorno de desarrollo.
+2. Instala Serverless Framework globalmente si no lo has hecho aún: `npm install -g serverless`.
+3. Modifica el archivo `serverless.yml` según tus necesidades y especifica las variables de entorno requeridas.
+4. Ejecuta el comando `serverless deploy --stage dev --region us-east-2` para desplegar el servicio en el stage de desarrollo.
+5. Si deseas desplegar en producción, ejecuta `serverless deploy --stage prod --region us-east-2`.
+6. Verifica la salida del despliegue para obtener las URLs de las funciones y otros detalles relevantes.
 
-### Local development
+## Esquema de Arquitectura
 
-You can invoke your function locally by using the following command:
-
-```bash
-serverless invoke local --function hello
-```
-
-Which should result in response similar to the following:
-
-```
-{
-    "statusCode": 200,
-    "body": "{\"message\": \"Go Serverless v3.0! Your function executed successfully!\", \"input\": {}}"
-}
-```
-
-### Bundling dependencies
-
-In case you would like to include third-party dependencies, you will need to use a plugin called `serverless-python-requirements`. You can set it up by running the following command:
-
-```bash
-serverless plugin install -n serverless-python-requirements
-```
-
-Running the above will automatically add `serverless-python-requirements` to `plugins` section in your `serverless.yml` file and add it as a `devDependency` to `package.json` file. The `package.json` file will be automatically created if it doesn't exist beforehand. Now you will be able to add your dependencies to `requirements.txt` file (`Pipfile` and `pyproject.toml` is also supported but requires additional configuration) and they will be automatically injected to Lambda package during build process. For more details about the plugin's configuration, please refer to [official documentation](https://github.com/UnitedIncome/serverless-python-requirements).
+![Esquema de arquitectura](https://simpliassets12daacw.s3.us-east-2.amazonaws.com/shema_architecture.jpeg)

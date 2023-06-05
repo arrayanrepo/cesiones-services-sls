@@ -1,0 +1,9 @@
+{
+    "Records": [
+        {
+            "Sns": {
+                "Message": "{\"rut_cliente\": \"77167104-7\", \"estado_cesion\": \"Cesion Vigente\", \"rut_deudor\": \"69130300-4\", \"mail_deudor\": null, \"tipo_documento\": \"33\", \"nombre_doc\": \"Factura Electronica\", \"folio\": \"76\", \"fch_emis_dte\": \"2022-11-10\", \"mnt_total\": \"9520000\", \"cedente\": \"76184721-K\", \"rz_cedente\": \"BPC Servicios y Negocios S.A.\", \"mail_cedente\": \"soporte@bolsadeproductos.cl\", \"cesionario\": \"76865845-5\", \"rz_cesionario\": \"ARRAYAN FACTORING S.A.\", \"mail_cesionario\": \"echandia@arrayanfinanciero.cl\", \"fch_cesion\": \"2023-06-01 13:25\", \"mnt_cesion\": \"9520000\", \"fch_vencimiento\": \"2022-11-10\"}"
+            }
+        }
+    ]
+}

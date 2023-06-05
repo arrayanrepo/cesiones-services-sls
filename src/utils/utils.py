@@ -2,10 +2,13 @@
 import datetime as dt
 import time
 import logging
-
+import pytz
 
 logging.basicConfig(level=logging.INFO,format='%(asctime)s [%(levelname)-8s %(lineno)d] - (%(module)s.%(funcName)s) %(message)s)')
 logger = logging.getLogger(__name__)
+
+global timezone
+timezone = pytz.timezone('America/Santiago')
 
 
 FORMAT = '%d%m%Y'
@@ -31,7 +34,7 @@ def retry_fetch(func, retries=5):
 
 
 def format_number(value):
-    _value = round(value)
+    _value = round(float(value))
     _format = '{:,}'.format(_value).replace(',','.')
     return f'$ {_format}'
 
@@ -54,9 +57,24 @@ def format_rut( rut):
 
 def get_dates(days, format_string = FORMAT):
 
-    now = dt.datetime.now()
+    now = dt.datetime.now(timezone)
     _init_date = now - dt.timedelta(days=int(days))
 
     desde = _init_date.strftime(format_string)
     hasta = now.strftime(format_string)
     return (desde, hasta)
+
+def get_today():
+    
+    now = dt.datetime.now(timezone)
+    return now
+
+
+def format_string_date(date, format_input, format_output):
+    
+    if date is None:
+        return None
+    
+    object_date = dt.datetime.strptime(date, format_input)
+    output_date = object_date.strftime(format_output)
+    return output_date
