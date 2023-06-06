@@ -86,9 +86,7 @@ def clean_cesiones(data):
         results = querys.validate_records(rut_cliente=obj['rut_cliente'],rut_deudor=obj['rut_deudor'],folio=obj['folio'])
         
         if len(results) > 0:
-            if all(results[0].values()):
-                continue
-            else:
+            if not all(results[0].values()):
                 snsTopic.publish_event(message=json.dumps(obj))
                 print(f'Message => {obj}')
                 cesiones.append(obj)
@@ -103,7 +101,7 @@ def run(rut ,password ,days , tipo_consulta):
     desde, hasta = utils.get_dates(days=days, format_string='%d%m%Y')
     session, cookies = sii_session.login(rut=rut,password=password)        
     
-    fetched_cesiones = None
+    fetched_cesiones = []
     logger.info('Obtener cesiones')
     cesiones = fetch_get_cesiones(session=session ,cookies=cookies, tipo_consulta=tipo_consulta, desde=desde, hasta=hasta)
     
