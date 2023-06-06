@@ -21,6 +21,17 @@ custom:
       SECRET_SII_ARN:  'arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84'
       DIAS_CERTF: 10
     
+    qa:
+      
+      ENV: 'qa'
+      REGION : 'us-east-2'
+      SECRET_NAME_DB: 'qa/mysql'
+      BUCKET_S3: 'arrayanfilesqa'
+      SECRET_NAME_SII: 'sii/simpli'
+      SECRET_DB_ARN: 'arn:aws:secretsmanager:us-east-2:746907585706:secret:qa/mysql-BtIAsJ'
+      SECRET_SII_ARN:  'arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84'
+      DIAS_CERTF: 10
+    
     prod:
 
       ENV: 'prod'
@@ -195,6 +206,8 @@ functions:
         SECRET_NAME_SII : ${self:custom.stages.${opt:stage}.SECRET_NAME_SII}
         SECRET_NAME_DB : ${self:custom.stages.${opt:stage}.SECRET_NAME_DB}
         SNS_TOPIC_ARN : !Ref GetCesionesTopic
+    dependsOn:
+      - "GetCesionesRole"
     role : 
       Fn::Sub:
         - arn:aws:iam::${aws:accountId}:role/${RoleName}
@@ -223,6 +236,7 @@ functions:
       dependsOn:
         - "GetCesionesTopic"
         - "DbInsertTopic"
+        - "ConsumerProcessCesionRole"
       events:
         - sns:
             displayName: Guarda el registro en la DB en historial_cesiones cuando un evento en publicado en GetCesionesTopic
@@ -246,6 +260,7 @@ functions:
       dependsOn:
         - "GetCesionesTopic"
         - "DbInsertTopic"
+        - "ConsumerProcessCesionRole"
       events:
         - sns:
             displayName: Extrae los AEC cuando un evento es publicado en GetCesionesTopic
@@ -270,6 +285,7 @@ functions:
       dependsOn:
         - "GetCesionesTopic"
         - "DbInsertTopic"
+        - "ConsumerProcessCesionRole"
       events:
         - sns:
             displayName: Extrae los certificados de cesion cuando un evento es publicado en GetCesionesTopic
@@ -296,6 +312,7 @@ functions:
       dependsOn:
         - "GetCesionesTopic"
         - "DbInsertTopic"
+        - "ConsumerProcessCesionRole"
       events:
         - sns:
             displayName: Procesar el evento luego de que se descargar el AEC
@@ -320,6 +337,7 @@ functions:
           - RoleName: ConsumerProcessCesionRole-${self:custom.stages.${opt:stage}.ENV}
       dependsOn:
         - "DbInsertTopic"
+        - "ConsumerProcessCesionRole"
       events:
         - sns:
             displayName: Procesar el evento de guardado

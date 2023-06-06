@@ -87,7 +87,7 @@ def clean_cesiones(data):
         
         if len(results) > 0:
             if all(results[0].values()):
-                return cesiones
+                continue
             else:
                 snsTopic.publish_event(message=json.dumps(obj))
                 print(f'Message => {obj}')
@@ -95,6 +95,8 @@ def clean_cesiones(data):
         else:
             snsTopic.publish_event(message=json.dumps(obj))
             cesiones.append(obj)
+    
+    return cesiones   
     
 def run(rut ,password ,days , tipo_consulta):
     
