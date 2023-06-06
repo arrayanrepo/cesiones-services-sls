@@ -36,10 +36,10 @@ custom:
 
       ENV: 'prod'
       REGION : 'us-east-2'
-      SECRET_NAME_DB: 'prodLemuRDS'
+      SECRET_NAME_DB: 'prod/mysql'
       BUCKET_S3: 'arrayanfilesprod'
       SECRET_NAME_SII: 'sii/simpli'
-      SECRET_DB_ARN: 'arn:aws:secretsmanager:us-east-2:746907585706:secret:prodLemuRDS-7PU8km'
+      SECRET_DB_ARN: 'arn:aws:secretsmanager:us-east-2:746907585706:secret:prod/mysql-s2isEm'
       SECRET_SII_ARN:  'arn:aws:secretsmanager:us-east-2:746907585706:secret:sii/simpli-KD5H84'
       DIAS_CERTF: 10
 

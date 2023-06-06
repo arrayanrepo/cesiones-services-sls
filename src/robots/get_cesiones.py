@@ -85,7 +85,7 @@ def clean_cesiones(data):
         
         results = querys.validate_records(rut_cliente=obj['rut_cliente'],rut_deudor=obj['rut_deudor'],folio=obj['folio'])
         
-        if len(results) > 0:
+        if results and  len(results) > 0:
             if not all(results[0].values()):
                 snsTopic.publish_event(message=json.dumps(obj))
                 print(f'Message => {obj}')
