@@ -15,6 +15,7 @@ from src.sns import snsTopic
 ## utils
 from src.utils import utils
 
+
 logging.basicConfig(level=logging.INFO,format='%(asctime)s [%(levelname)-8s %(lineno)d] - (%(module)s.%(funcName)s) %(message)s)')
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,12 @@ def fetch_get_cesiones(session,cookies,tipo_consulta, desde, hasta):
         session.get('https://zeusr.sii.cl/cgi_AUT2000/autTermino.cgi')
         return response.content
     except Exception as err:
-        logger.info("No fue posible obtener las cesiones")
+        payload = {
+            'message': "No fue posible obtener las cesiones",
+            'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'),
+            'error': str(err)
+        }
+        print(json.dumps(payload))
         raise SystemError(f"No fue posible obtener las cesiones {err}")
 
 
@@ -85,13 +91,19 @@ def clean_cesiones(data):
         
         results = querys.validate_records(rut_cliente=obj['rut_cliente'],rut_deudor=obj['rut_deudor'],folio=obj['folio'])
         
-        if results and  len(results) > 0:
+        payload = {
+            'message': 'event publish',
+            'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'),
+            'data': obj
+        }
+        if len(results) > 0:
             if not all(results[0].values()):
                 snsTopic.publish_event(message=json.dumps(obj))
-                print(f'Message => {obj}')
+                print(json.dumps(payload))                
                 cesiones.append(obj)
         else:
             snsTopic.publish_event(message=json.dumps(obj))
+            print(json.dumps(payload))                
             cesiones.append(obj)
     
     return cesiones   

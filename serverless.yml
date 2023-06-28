@@ -216,9 +216,9 @@ functions:
     events:
       - schedule: 
           rate: cron(*/5 5-22 ? * MON-FRI *)
-          enabled: false
+          enabled: true
           input:
-            dias: 1
+            dias: 4
             tipo_consulta: 2
   
   ## procesa el evento de GetCesionesTopic para guardar en historial cesiones

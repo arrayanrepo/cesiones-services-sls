@@ -93,4 +93,12 @@ def run(rut,password,documento):
     logger.info('Obtener AEC')
     aec_file_url = download_aec(session=session,cookies=cookies,documento=documento)
     
+    
+    log = {
+        **documento,
+        'aec_file_url': aec_file_url,
+    }
+
+    print(f'get aec => {log}')
+    
     return aec_file_url

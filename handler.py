@@ -29,14 +29,15 @@ def get_cesiones_simpli(event, context):
     password = _secrets['pass_sii_simpli']
     rut = _secrets['user_sii_simpli']
 
-    cesiones = get_cesiones.run(
-        rut=rut, password=password, days=dias, tipo_consulta=tipo_consulta)
+    cesiones = get_cesiones.run(rut=rut, password=password, days=dias, tipo_consulta=tipo_consulta)
 
     payload = {
+        'message': "Total cesiones obtenidas",
+        'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'),
         'total_cesiones': len(cesiones),
     }
 
-    print(f'EVENT FINISH AT {utils.get_today()} => {payload}')
+    print(f'{json.dumps(payload)}')
 
     return {"statusCode": 200, "body": json.dumps(payload)}
 

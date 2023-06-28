@@ -1,5 +1,5 @@
 ## python
-import datetime as dt
+import json
 
 ## database con
 from src.database.database import DatabaseSession
@@ -37,6 +37,18 @@ def validate_records(folio,rut_deudor,rut_cliente):
         and ah.cesionario  = '76865845-5'
         order by ah.date_created desc;
     """
+    
+    payload = {
+        'message': 'Validando que existan los records para la factura',
+        'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'),
+        'data': {
+            'rut_cliente': rut_cliente,
+            'rut_deudor': rut_deudor,
+            'folio': folio
+        }
+    }
+    print(json.dumps(payload))
+    
     result = DatabaseSession.execute_query(query=sql, params={'rut_cliente':rut_cliente, 'rut_deudor':rut_deudor, 'folio': folio})    
     return result
 
@@ -65,6 +77,14 @@ def get_historial_cesiones(rut_deudor, folio, company_id):
         'deudor': rut_deudor,
         'folio_doc': folio,
     }
+    
+    payload = {
+        'message': 'Search into historial cesion',
+        'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'),
+        'data': params
+    }
+    print(json.dumps(payload))
+    
     result = DatabaseSession.execute_query(query=sql, params=params)
     return result
 
@@ -157,25 +177,53 @@ def save_historial_cesion(data):
         
         ## get db 
         historial_db = get_historial_cesiones(rut_deudor=data['deudor'],folio=data['folio_doc'],company_id=company_id)
-
         if len(historial_db) > 0:
+            payload = {
+                'message': 'Query historial cesiones existe',
+                'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'),
+                'data': {
+                    'total': len(historial_db),
+                    'rut_deudor': data['deudor'],
+                    'rut_cliente': data['vendedor'],
+                    'folio': data['folio_doc']
+                }
+            }
+            print(json.dumps(payload))
+            
             return False
         
         ## insertar en historial cesiones
         data['company_id'] = company_id
+        payload = {
+            'message': 'Query historial cesiones no existe',
+            'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'),
+            'data': {
+                'total': len(historial_db),
+                'rut_deudor': data['deudor'],
+                'rut_cliente': data['rut_cliente'],
+                'folio': data['folio_doc']
+            }
+        }
+        print(json.dumps(payload))
         insert_historial_cesiones(data=data)
         return True
         
     except Exception as err:
-        print(f'Error inserting historial cesiones {err}')
+        
+        payload = {
+            'message': 'Error al insertar en db',
+            'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'), 
+            'error': str(err),
+        }
+        print(json.dumps(payload))
         return False
     
-def get_aec_register(historial_cesion_id : int):
+def get_aec_register(company_id: int, deudor_id : int , folio : int):
     
     DatabaseSession()
     
-    sql = 'SELECT id FROM api_aeccesion WHERE historialcesion_id = :id'
-    result = DatabaseSession.execute_query(query=sql,params={"id": historial_cesion_id})
+    sql = 'SELECT id FROM api_aeccesion WHERE company_id = :company_id and deudor_id = :deudor_id and folio = :folio'
+    result = DatabaseSession.execute_query(query=sql,params={"company_id": company_id,'deudor_id': deudor_id, 'folio': folio})
     return result
 
 def get_certf_cesion(rut_cliente: str, rut_deudor: str , folio : str):
@@ -259,11 +307,12 @@ def insert_aec_file(data):
         historial_db = get_historial_cesiones(rut_deudor=data['rut_deudor'],folio=data['folio'],company_id=company_id)
         
         if len(historial_db) == 0:
-            return False
+            historial_cesion_id = None
+        else:
+            historial_cesion_id = historial_db[0]['id']
         
-        historial_cesion_id = historial_db[0]['id']
         
-        if len(get_aec_register(historial_cesion_id=historial_cesion_id)) > 0:
+        if len(get_aec_register(company_id=company_id,deudor_id=deudor_id,folio=data['folio'])) > 0:
             return False
         
         insert_db_aec(file=data['url_file'],historialcesion_id=historial_cesion_id,date_created=utils.get_today(),company_id=company_id,deudor_id=deudor_id,folio=data['folio'])

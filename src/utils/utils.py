@@ -78,3 +78,12 @@ def format_string_date(date, format_input, format_output):
     object_date = dt.datetime.strptime(date, format_input)
     output_date = object_date.strftime(format_output)
     return output_date
+
+
+def format_date(date : dt.datetime, datestring_format : str) -> str:
+    
+    if date is None:
+        return None
+    
+    _date = date.strftime(datestring_format)
+    return _date
