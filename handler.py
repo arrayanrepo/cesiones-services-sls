@@ -175,3 +175,15 @@ def insertRecordDb(event, context):
     result = query_manager.select_query(data=event_data, event_type=event_type)
 
     return {"statusCode": 200, 'result': result}
+
+if __name__ == '__main__':
+    
+    event ={
+        'dias': 4,
+        'tipo_consulta': 2
+    }
+    
+    
+    context = {}
+    
+    get_cesiones_simpli(event=event,context=context)

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def retrieve_url_conn(write=False):
-        
+    
     secret_name = os.environ.get('SECRET_NAME_DB')
     secret_region = os.environ.get('REGION_SECRET')
         
