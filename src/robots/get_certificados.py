@@ -59,6 +59,16 @@ def run(rut,password, days, cesion):
             'event_type': 2
         }
         
+        payload = {
+            'message': 'event publish',
+            'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'),
+            'event_type': 2,
+            'description': 'get certificado cesion',
+            'data': message
+        }
+        
+        print(json.dumps(payload))
+        
         snsTopic.publish_event(message=json.dumps(message))
         
         return {'statusCode': 200, 'file_url': file_url}

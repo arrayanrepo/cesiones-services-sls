@@ -200,7 +200,7 @@ def save_historial_cesion(data):
             'data': {
                 'total': len(historial_db),
                 'rut_deudor': data['deudor'],
-                'rut_cliente': data['rut_cliente'],
+                'rut_cliente': data['vendedor'],
                 'folio': data['folio_doc']
             }
         }
@@ -354,15 +354,18 @@ def insert_pdf_file(data):
         
         sql = """
             UPDATE api_documentofactura doc
-            JOIN api_company deudor  ON (deudor.id =  doc.deudor_id )
-            JOIN api_company cliente  ON (cliente.id =  doc.company_id)
             SET doc.pdf_file = :url
-            WHERE deudor.rut = :rut_deudor and cliente.rut = :rut_cliente  and doc.folio = :folio 
+            WHERE doc.deudor_id = :deudor_id and doc.company_id = :company_id  and doc.folio = :folio 
         """
         
+        _company_id = get_company_id(rut_cliente=data['rut_cliente'])
+        company_id = _company_id[0]['id']
+        _deudor_id = get_company_id(rut_cliente=data['rut_deudor'])
+        deudor_id = _deudor_id[0]['id']
+        
         params = {
-            'rut_cliente':  data['rut_cliente'],
-            'rut_deudor': data['rut_deudor'],
+            'company_id':  company_id,
+            'deudor_id': deudor_id,
             'folio': data['folio'],
             'url': data['url_file']
         }

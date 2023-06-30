@@ -89,7 +89,14 @@ def get_certificado_cesion(event, context):
     url_file = get_certificados.run(
         rut=rut, password=password, days=dias, cesion=cesion)
 
-    print(f' URL FILE: {url_file}')
+    payload = {
+        'message': 'get certificado cesion',
+        'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%'),
+        'data': {
+            'url_file': url_file
+        }
+    }
+    print(json.dumps(payload))
     
     return {'statuCode': 200, 'url': url_file}
 

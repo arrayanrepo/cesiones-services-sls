@@ -78,6 +78,17 @@ def save_file(documento,data):
             'url_file': file_url,
             'event_type': 1
         }
+        
+        payload = {
+            'message': 'event publish',
+            'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'),
+            'event_type': 1,
+            'description': 'get aec file',
+            'data': message
+        }
+        
+        print(json.dumps(payload))
+        
         snsTopic.publish_event(message=json.dumps(message))
         
         return file_url
@@ -98,7 +109,12 @@ def run(rut,password,documento):
         **documento,
         'aec_file_url': aec_file_url,
     }
-
-    print(f'get aec => {log}')
+    
+    payload = {
+        'message': 'Get AEC file',
+        'timestamp': utils.format_date(utils.get_today(),'%d/%m/%Y %H:%M:%S'),
+        'data': log
+    }
+    print(json.dumps(payload))
     
     return aec_file_url
